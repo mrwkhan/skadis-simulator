@@ -2,6 +2,8 @@
 
 Ein präzises, webbasiertes Tool zur Planung von IKEA SKÅDIS Lochwänden. Speziell entwickelt für **3D-Druck-Enthusiasten** und Maker, die exakte Maße, Sperrzonen für Schrauben und benutzerdefinierte Teile benötigen.
 
+Link zum Tool: https://mrwkhan.github.io/skadis-simulator/skadis.html
+
 ![Status](https://img.shields.io/badge/Status-Stable-green) ![Version](https://img.shields.io/badge/Version-33-blue) ![Tech](https://img.shields.io/badge/Tech-HTML%20%7C%20JS%20%7C%20SVG-orange)
 
 ## 🌟 Warum dieser Planer?
