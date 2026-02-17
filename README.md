@@ -85,4 +85,4 @@ Wähle unter **"2. Basis"** die Größe und Farbe der Lochplatte und klicke auf 
 
 ## 📄 Lizenz
 
-Dieses Projekt steht zur freien Verfügung. Feel free to fork and improve!
+Dieses Projekt steht zur freien Verfügung. Feel free to fork and improve! Use at own risk!
