@@ -2,21 +2,40 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>SKÅDIS Konfigurator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SKÅDIS Konfigurator Mobile</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; height: 100vh; display: flex; overflow: hidden; background: #e0e0e0; }
         
         /* --- SIDEBAR --- */
-        .sidebar { width: 380px; background: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 200; overflow-y: auto; }
-        h2 { color: #0058a3; margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #ffdb00; padding-bottom: 10px; }
+        .sidebar { 
+            width: 380px; background: white; padding: 20px; display: flex; flex-direction: column; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 200; overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+        }
         
+        /* Mobile Sidebar Logic */
+        .sidebar-toggle { display: none; position: absolute; top: 10px; left: 10px; z-index: 300; background: #0058a3; color: white; border: none; padding: 10px; border-radius: 4px; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; height: 100%; left: 0; top: 0; transform: translateX(-100%); width: 85%; max-width: 320px; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: block; }
+            .overlay-controls { top: 60px; } /* Move zoom buttons down a bit */
+        }
+
+        h2 { color: #0058a3; margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #ffdb00; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        
+        .close-sidebar-btn { display: none; background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; }
+        @media (max-width: 768px) { .close-sidebar-btn { display: block; } }
+
         .control-group { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
         label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: #333; }
-        
         input, select { width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         input[type="color"] { height: 40px; border: none; cursor: pointer; }
-        
         button { width: 100%; padding: 10px; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 4px; transition: 0.2s; margin-bottom: 5px; }
+        
+        /* Buttons Colors */
         .btn-blue { background: #0058a3; } .btn-blue:hover { background: #004f93; }
         .btn-dark { background: #333; } .btn-dark:hover { background: #555; }
         .btn-green { background: #008a00; margin-top: 10px; } .btn-green:hover { background: #006e00; }
@@ -35,30 +54,15 @@
         .flex-col small { font-size: 0.7rem; color: #666; margin-bottom: 2px; }
 
         /* --- WORKSPACE --- */
-        .workspace { flex-grow: 1; overflow: hidden; position: relative; background-color: #d4d4d4; cursor: grab; }
+        .workspace { flex-grow: 1; overflow: hidden; position: relative; background-color: #d4d4d4; cursor: grab; touch-action: none; /* Important for custom touch handling */ }
         .workspace:active { cursor: grabbing; }
         
-        #zoomContainer {
-            transform-origin: 0 0; 
-            position: absolute; top: 50%; left: 50%; 
-            transition: transform 0.05s linear;
-        }
-
-        #wall {
-            background-color: #e5e5e5;
-            border: 4px solid #444;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transform: translate(-50%, -50%);
-        }
-
-        .grid-on {
-            background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px);
-            background-size: 10px 10px; 
-        }
+        #zoomContainer { transform-origin: 0 0; position: absolute; top: 50%; left: 50%; transition: transform 0.05s linear; }
+        #wall { background-color: #e5e5e5; border: 4px solid #444; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: translate(-50%, -50%); }
+        .grid-on { background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px); background-size: 10px 10px; }
         
         /* --- ITEMS --- */
-        .item { position: absolute; box-sizing: border-box; cursor: default; user-select: none; }
+        .item { position: absolute; box-sizing: border-box; cursor: default; user-select: none; -webkit-user-select: none; touch-action: none; }
         .item:hover { cursor: grab; }
         .item:active { cursor: grabbing; }
         .item.selected { border: 2px solid #ff0000 !important; box-shadow: 0 0 10px rgba(255, 0, 0, 0.6); z-index: 9999 !important; }
@@ -68,39 +72,20 @@
         .board-wood { background-color: #e3cbb3; border-color: #cbb092 !important; }
         .board-black { background-color: #333333; border-color: #111 !important; }
 
-        .sim-hole {
-            position: absolute; width: 2.5px; height: 7.5px; border-radius: 1.25px;
-            background-color: rgba(0,0,0,0.18); transform: translate(-50%, -50%); pointer-events: none;
-        }
+        .sim-hole { position: absolute; width: 2.5px; height: 7.5px; border-radius: 1.25px; background-color: rgba(0,0,0,0.18); transform: translate(-50%, -50%); pointer-events: none; }
         .board-black .sim-hole { background-color: rgba(255,255,255,0.25); }
 
-        .mount-point {
-            position: absolute; width: 14px; height: 14px; background: rgba(255, 0, 0, 0.3); 
-            border: 1.5px solid red; border-radius: 50%; transform: translate(-50%, -50%);
-            display: flex; align-items: center; justify-content: center; z-index: 15;
-        }
+        .mount-point { position: absolute; width: 14px; height: 14px; background: rgba(255, 0, 0, 0.3); border: 1.5px solid red; border-radius: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; z-index: 15; }
         .mount-point::after { content: "×"; color: red; font-weight: bold; font-size: 10px; line-height: 0; }
 
-        .item.accessory {
-            z-index: 50; 
-            border: 1px solid rgba(0,0,0,0.2);
-            /* Color set by JS */
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; border-radius: 4px; overflow: hidden; padding: 2px; line-height: 1.1;
-        }
+        .item.accessory { z-index: 50; border: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-radius: 4px; overflow: hidden; padding: 2px; line-height: 1.1; }
 
         .staging-area { border: 2px dashed #aaa; background: #f4f4f4; min-height: 80px; margin-top: 15px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; border-radius: 4px; }
-        #trash { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #cc0000; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; z-index: 100; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        #trash:hover { transform: scale(1.1); }
         
-        .status-bar { 
-            position: absolute; bottom: 10px; left: 10px; 
-            background: rgba(255,255,255,0.95); padding: 8px 12px; 
-            border-radius: 6px; font-size: 0.8rem; 
-            display: flex; gap: 15px; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-            z-index: 100; border: 1px solid #ccc;
-        }
+        #trash { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #cc0000; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; z-index: 100; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #trash.drag-hover { transform: scale(1.2); background: #ff0000; }
+        
+        .status-bar { position: absolute; bottom: 10px; left: 10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 100; border: 1px solid #ccc; flex-wrap: wrap; }
         
         .overlay-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 5px; z-index: 100; }
         .ctrl-btn { width: 40px; height: 40px; background: white; border: 1px solid #ccc; border-radius: 4px; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; color: #333; }
@@ -112,8 +97,13 @@
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>SKÅDIS Planer v33</h2>
+<button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="sidebar" id="sidebar">
+    <h2>
+        SKÅDIS Planer v4.0 (Mobile)
+        <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
+    </h2>
     
     <div class="control-group">
         <label>Projektverwaltung</label>
@@ -237,8 +227,7 @@
     </div>
 
     <div class="status-bar">
-        <div>ℹ️ Scroll = Zoom | Drag Hintergrund = Pan | Doppelklick = Edit</div>
-        <div style="color:red; display:flex; align-items:center; gap:5px;"><span style="border:1px solid red; border-radius:50%; width:10px; height:10px; display:inline-block; text-align:center; line-height:10px; font-size:8px;">×</span> Montagepunkt</div>
+        <div>ℹ️ Touch: 1 Finger = Pan/Drag | 2 Finger = Zoom</div>
         <div>📍 <span id="coords">x: -, y: -</span></div>
     </div>
 </div>
@@ -267,19 +256,32 @@
     const stagingDiv = document.getElementById('staging');
     const trashDiv = document.getElementById('trash');
     const coordsSpan = document.getElementById('coords');
-    
-    // View State
+    const sidebar = document.getElementById('sidebar');
+
+    // --- VIEW STATE ---
     let currentZoom = 1.0;
     let panX = 0, panY = 0;
     let isPanning = false;
     let startPanX = 0, startPanY = 0;
+    
+    // --- TOUCH STATE ---
+    let initialPinchDistance = null;
+    let initialZoom = 1.0;
 
-    // Item Drag State
+    // --- ITEM DRAG STATE ---
     let draggedItem = null;
     let selectedItem = null;
     let dragOffsetX = 0, dragOffsetY = 0;
-    
-    // --- HELPER: CONTRAST COLOR ---
+    let isTouchDragging = false;
+    let touchDragItem = null;
+    let touchStartItemX = 0, touchStartItemY = 0;
+
+    // --- SIDEBAR TOGGLE ---
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+    }
+
+    // --- HELPER ---
     function getContrastColor(hexColor) {
         if(!hexColor || !hexColor.startsWith('#')) return 'white';
         const r = parseInt(hexColor.substr(1, 2), 16);
@@ -289,25 +291,184 @@
         return (yiq >= 128) ? 'black' : 'white';
     }
 
-    // --- ZOOM & PAN ---
-    function updateTransform() { zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`; }
+    // --- ZOOM & PAN (DESKTOP + TOUCH) ---
+    function updateTransform() { 
+        zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+    }
+    
     function changeZoom(delta) {
         currentZoom += delta;
-        if(currentZoom < 0.2) currentZoom = 0.2; if(currentZoom > 3.0) currentZoom = 3.0;
+        if(currentZoom < 0.2) currentZoom = 0.2; 
+        if(currentZoom > 3.0) currentZoom = 3.0;
         updateTransform();
     }
-    function resetView() { currentZoom = 1.0; panX = 0; panY = 0; updateTransform(); }
-    workspace.addEventListener('wheel', (e) => { e.preventDefault(); changeZoom(-Math.sign(e.deltaY) * 0.1); });
+    
+    function resetView() { 
+        currentZoom = 1.0; panX = 0; panY = 0; updateTransform(); 
+    }
+
+    // MOUSE Wheel Zoom
+    workspace.addEventListener('wheel', (e) => { 
+        e.preventDefault(); 
+        changeZoom(-Math.sign(e.deltaY) * 0.1); 
+    }, { passive: false });
+
+    // MOUSE Pan
     workspace.addEventListener('mousedown', (e) => {
         if (e.target.closest('.item')) return;
-        isPanning = true; startPanX = e.clientX - panX; startPanY = e.clientY - panY; workspace.style.cursor = 'grabbing';
+        isPanning = true; 
+        startPanX = e.clientX - panX; 
+        startPanY = e.clientY - panY; 
+        workspace.style.cursor = 'grabbing';
     });
+    
     window.addEventListener('mousemove', (e) => {
-        if (isPanning) { e.preventDefault(); panX = e.clientX - startPanX; panY = e.clientY - startPanY; updateTransform(); }
+        if (isPanning) { 
+            e.preventDefault(); 
+            panX = e.clientX - startPanX; 
+            panY = e.clientY - startPanY; 
+            updateTransform(); 
+        }
     });
-    window.addEventListener('mouseup', () => { isPanning = false; workspace.style.cursor = 'grab'; });
+    
+    window.addEventListener('mouseup', () => { 
+        isPanning = false; 
+        workspace.style.cursor = 'grab'; 
+    });
 
-    // --- CORE ---
+    // --- TOUCH INTERACTION (ZOOM / PAN / DRAG) ---
+    
+    function getDistance(touches) {
+        return Math.hypot(
+            touches[0].pageX - touches[1].pageX,
+            touches[0].pageY - touches[1].pageY
+        );
+    }
+
+    workspace.addEventListener('touchstart', (e) => {
+        // 1. Check if touching an Item -> Handle Item Drag
+        const itemTarget = e.target.closest('.item');
+        if (itemTarget && e.touches.length === 1) {
+            selectItem(itemTarget);
+            touchDragItem = itemTarget;
+            isTouchDragging = true;
+            
+            // Calculate Offset inside the item
+            const rect = itemTarget.getBoundingClientRect();
+            dragOffsetX = e.touches[0].clientX - rect.left; 
+            dragOffsetY = e.touches[0].clientY - rect.top;
+            
+            // Move item to workspace if it is in staging
+            if (touchDragItem.parentElement === stagingDiv) {
+                wallDiv.appendChild(touchDragItem);
+                touchDragItem.style.position = 'absolute';
+                // Initially center on finger until moved
+                const wallRect = wallDiv.getBoundingClientRect();
+                let initX = (e.touches[0].clientX - wallRect.left) / currentZoom;
+                let initY = (e.touches[0].clientY - wallRect.top) / currentZoom;
+                touchDragItem.style.left = initX + 'px';
+                touchDragItem.style.top = initY + 'px';
+            }
+            
+            touchDragItem.style.opacity = '0.7';
+            e.stopPropagation(); // Don't trigger pan
+            return; 
+        }
+
+        // 2. Pinch Zoom (2 Fingers)
+        if (e.touches.length === 2) {
+            isPanning = false;
+            initialPinchDistance = getDistance(e.touches);
+            initialZoom = currentZoom;
+            e.preventDefault();
+        } 
+        // 3. Pan (1 Finger on background)
+        else if (e.touches.length === 1) {
+            isPanning = true;
+            startPanX = e.touches[0].clientX - panX;
+            startPanY = e.touches[0].clientY - panY;
+        }
+    }, { passive: false });
+
+    workspace.addEventListener('touchmove', (e) => {
+        // Item Dragging
+        if (isTouchDragging && touchDragItem) {
+            e.preventDefault(); // Stop scrolling
+            
+            const wallRect = wallDiv.getBoundingClientRect();
+            const clientX = e.touches[0].clientX;
+            const clientY = e.touches[0].clientY;
+
+            // Calculate position relative to ZoomContainer/Wall
+            // Logic: (MousePos - WallOffset - ItemInsideOffset) / ZoomScale
+            let x = (clientX - wallRect.left - dragOffsetX) / currentZoom;
+            let y = (clientY - wallRect.top - dragOffsetY) / currentZoom;
+
+            // Snap to Grid (5px)
+            x = Math.round(x / 5) * 5; 
+            y = Math.round(y / 5) * 5;
+
+            touchDragItem.style.left = x + 'px';
+            touchDragItem.style.top = y + 'px';
+            updateCoordsDisplay();
+
+            // Check Trash Overlap
+            const trashRect = trashDiv.getBoundingClientRect();
+            if (clientX >= trashRect.left && clientX <= trashRect.right &&
+                clientY >= trashRect.top && clientY <= trashRect.bottom) {
+                trashDiv.classList.add('drag-hover');
+            } else {
+                trashDiv.classList.remove('drag-hover');
+            }
+            return;
+        }
+
+        // Pinch Zoom
+        if (e.touches.length === 2 && initialPinchDistance) {
+            e.preventDefault();
+            const dist = getDistance(e.touches);
+            const delta = dist - initialPinchDistance;
+            // Sensitivity factor
+            currentZoom = initialZoom + (delta * 0.005);
+            if (currentZoom < 0.2) currentZoom = 0.2;
+            if (currentZoom > 3.0) currentZoom = 3.0;
+            updateTransform();
+        }
+        // Panning
+        else if (isPanning && e.touches.length === 1) {
+            e.preventDefault();
+            panX = e.touches[0].clientX - startPanX;
+            panY = e.touches[0].clientY - startPanY;
+            updateTransform();
+        }
+    }, { passive: false });
+
+    workspace.addEventListener('touchend', (e) => {
+        // Finish Item Drag
+        if (isTouchDragging && touchDragItem) {
+            touchDragItem.style.opacity = '1';
+            
+            // Trash Logic
+            const trashRect = trashDiv.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            if (touch.clientX >= trashRect.left && touch.clientX <= trashRect.right &&
+                touch.clientY >= trashRect.top && touch.clientY <= trashRect.bottom) {
+                touchDragItem.remove();
+                selectedItem = null;
+                updatePrice();
+            }
+            
+            trashDiv.classList.remove('drag-hover');
+            isTouchDragging = false;
+            touchDragItem = null;
+        }
+
+        isPanning = false;
+        initialPinchDistance = null;
+    });
+
+
+    // --- CORE LOGIC (Resized Wall, Grid, etc) ---
     function resizeWall() {
         wallDiv.style.width = (document.getElementById('wallW').value * scale) + 'px';
         wallDiv.style.height = (document.getElementById('wallH').value * scale) + 'px';
@@ -315,19 +476,20 @@
     function toggleGrid() { wallDiv.classList.toggle('grid-on', document.getElementById('gridCheck').checked); }
     function clearWall() {
         if(confirm("Wirklich alles löschen?")) {
-            wallDiv.innerHTML = ''; stagingDiv.innerHTML = '<small style="width:100%; text-align:center;">Neue Teile hier ziehen</small>'; updatePrice();
+            wallDiv.innerHTML = '';
+            stagingDiv.innerHTML = '<small style="width:100%; text-align:center;">Neue Teile hier ziehen</small>'; 
+            updatePrice();
         }
     }
 
-    // --- BOARD GEOMETRY ---
+    // --- BOARD GENERATION ---
     function generateHoles(boardEl, w_cm, h_cm) {
-        const rows = 27; const rowPitch = 2; const colPitch = 4; const topMargin = 2; 
+        const rows = 27; const rowPitch = 2; const colPitch = 4; const topMargin = 2;
         for (let r = 0; r < rows; r++) {
             const isIndented = (r % 2 === 0);
             const xStart = isIndented ? 4 : 2; const yPos = topMargin + (r * rowPitch);
             for (let x = xStart; x <= w_cm - 2; x += colPitch) {
-                const hole = document.createElement('div');
-                hole.className = 'sim-hole';
+                const hole = document.createElement('div'); hole.className = 'sim-hole';
                 hole.style.left = (x * scale) + 'px'; hole.style.top = (yPos * scale) + 'px';
                 boardEl.appendChild(hole);
                 if (r === 0 || r === rows - 1) {
@@ -345,6 +507,7 @@
         const w = parseInt(opt.dataset.w), h = parseInt(opt.dataset.h), color = document.getElementById('boardColor').value;
         const el = createItemDOM({ type: 'board', price: parseFloat(sel.value), w: w, h: h, name: `SKÅDIS ${w}x${h} (${color})`, datasetType: 'ikea', variant: color }, stagingDiv);
         generateHoles(el, w, h);
+        if(window.innerWidth <= 768) toggleSidebar(); // Close sidebar on mobile
     }
 
     function toggleCustomInput() {
@@ -355,20 +518,18 @@
     function spawnAccessory() {
         const type = document.getElementById('accType').value;
         let data = { type: 'accessory' };
-
         if (type === 'custom') {
-            data.isCustom = true; data.name = document.getElementById('custName').value || "Teil";
-            data.datasetType = 'custom';
+            data.isCustom = true; data.name = document.getElementById('custName').value || "Teil"; data.datasetType = 'custom';
             data.w = parseFloat(document.getElementById('custW').value)||10; data.h = parseFloat(document.getElementById('custH').value)||10;
             data.price = parseFloat(document.getElementById('custPrice').value)||0; data.color = document.getElementById('custColor').value;
         } else {
-            const sel = document.getElementById('accType');
-            const opt = sel.options[sel.selectedIndex];
+            const sel = document.getElementById('accType'); const opt = sel.options[sel.selectedIndex];
             data.name = opt.text.split(' (')[0]; data.price = parseFloat(opt.getAttribute('data-price'));
             data.w = parseFloat(opt.getAttribute('data-w')); data.h = parseFloat(opt.getAttribute('data-h'));
             data.datasetType = 'ikea';
         }
         createItemDOM(data, stagingDiv);
+        if(window.innerWidth <= 768) toggleSidebar(); // Close sidebar on mobile
     }
 
     function createItemDOM(data, parent) {
@@ -381,15 +542,11 @@
 
         if (data.type === 'accessory') {
             const color = data.color || "#0058a3";
-            el.style.backgroundColor = color;
-            el.style.borderColor = adjustColor(color, -40);
-            
+            el.style.backgroundColor = color; el.style.borderColor = adjustColor(color, -40);
             const textColor = getContrastColor(color);
             const minDim = Math.min(data.w * scale, data.h * scale);
             const fontSize = Math.max(9, Math.min(14, minDim / 4));
-            
-            el.style.color = textColor;
-            el.style.fontSize = fontSize + 'px';
+            el.style.color = textColor; el.style.fontSize = fontSize + 'px';
             el.innerHTML = `<strong>${data.name}</strong>`;
         }
         
@@ -401,7 +558,11 @@
 
         el.addEventListener('mousedown', (e) => { selectItem(el); e.stopPropagation(); });
         el.addEventListener('dblclick', (e) => { openEdit(el); e.stopPropagation(); });
-        addDragLogic(el); parent.appendChild(el); selectItem(el); updatePrice();
+        
+        // Desktop Dragging (Native)
+        addDragLogic(el); 
+        
+        parent.appendChild(el); selectItem(el); updatePrice();
         return el;
     }
 
@@ -418,6 +579,7 @@
         if (e.target.id === 'workspace' || e.target.id === 'wall' || e.target.id === 'zoomContainer') deselectItem();
     });
 
+    // Native Drag Logic (Desktop)
     function addDragLogic(el) {
         el.draggable = true;
         el.addEventListener('dragstart', (e) => {
@@ -441,14 +603,16 @@
             updateCoordsDisplay();
         }
     });
-
-    trashDiv.addEventListener('dragover', (e) => { e.preventDefault(); trashDiv.style.transform = 'scale(1.2)'; });
-    trashDiv.addEventListener('dragleave', () => { trashDiv.style.transform = 'scale(1)'; });
+    
+    // Trash (Desktop)
+    trashDiv.addEventListener('dragover', (e) => { e.preventDefault(); trashDiv.classList.add('drag-hover'); });
+    trashDiv.addEventListener('dragleave', () => { trashDiv.classList.remove('drag-hover'); });
     trashDiv.addEventListener('drop', (e) => {
-        e.preventDefault(); trashDiv.style.transform = 'scale(1)';
+        e.preventDefault(); trashDiv.classList.remove('drag-hover');
         if (draggedItem) { draggedItem.remove(); selectedItem = null; updatePrice(); }
     });
 
+    // Keyboard support
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || !selectedItem || selectedItem.parentElement !== wallDiv) return;
         const step = e.shiftKey ? 20 : 5;
@@ -463,7 +627,7 @@
         if(selectedItem && selectedItem.parentElement === wallDiv) coordsSpan.innerText = `x: ${Math.round(parseInt(selectedItem.style.left)/scale)} cm, y: ${Math.round(parseInt(selectedItem.style.top)/scale)} cm`;
     }
 
-    // --- JSON EXPORT/IMPORT ---
+    // --- EXPORT/IMPORT/PRINT/EDIT (Same as before) ---
     function exportJSON() {
         const config = { wallW: document.getElementById('wallW').value, wallH: document.getElementById('wallH').value, items: [] };
         Array.from(wallDiv.children).forEach(el => {
@@ -485,11 +649,9 @@
                     const el = document.createElement('div'); el.className = i.className;
                     el.style.position = 'absolute'; el.style.left = i.l; el.style.top = i.t; el.style.width = i.w; el.style.height = i.h;
                     for (const [k, v] of Object.entries(i.ds)) el.dataset[k] = v;
-                    
                     if (i.className.includes('accessory')) {
                         const bg = i.bg; const txt = getContrastColor(bg);
                         el.style.backgroundColor = bg; el.style.color = txt; el.style.borderColor = adjustColor(bg, -40);
-                        
                         const minDim = Math.min(parseInt(i.w), parseInt(i.h));
                         const fs = Math.max(9, Math.min(14, minDim / 4));
                         el.style.fontSize = fs+'px';
@@ -508,18 +670,14 @@
         r.readAsText(input.files[0]); input.value = '';
     }
 
-    // --- PRINT EXPORT (SVG) ---
     function exportPrint() {
         const win = window.open('', '_blank');
         const w = wallDiv.offsetWidth, h = wallDiv.offsetHeight;
         const wallW_cm = document.getElementById('wallW').value;
         const wallH_cm = document.getElementById('wallH').value;
-        
         let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="background:#f4f4f4">`;
-        
         Array.from(wallDiv.children).forEach(el => {
             const l=parseInt(el.style.left), t=parseInt(el.style.top), width=parseInt(el.style.width), height=parseInt(el.style.height);
-            
             if (el.classList.contains('board')) {
                 let fill="#fff"; if(el.classList.contains('board-wood')) fill="#e3cbb3"; if(el.classList.contains('board-black')) fill="#333";
                 svg += `<rect x="${l}" y="${t}" width="${width}" height="${height}" fill="${fill}" stroke="#999" rx="12"/>`;
@@ -539,19 +697,14 @@
             }
         });
         svg += `</svg>`;
-
         let html = `<html><head><title>SKÅDIS Export</title><style>body{font-family:sans-serif; padding:20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:8px; text-align:left;} th{background:#f2f2f2;}</style></head><body>`;
-        html += `<h1>SKÅDIS Projekt</h1>`;
-        html += `<h3>Wandmaße: B ${wallW_cm} cm × H ${wallH_cm} cm</h3>`;
-        html += `${svg}`;
-        
+        html += `<h1>SKÅDIS Projekt</h1><h3>Wandmaße: B ${wallW_cm} cm × H ${wallH_cm} cm</h3>${svg}`;
         const ikea={}, custom=[]; let total=0;
         document.querySelectorAll('#wall .item').forEach(el => {
             const p = parseFloat(el.dataset.price); total+=p;
             if(el.dataset.type==='ikea') { ikea[el.dataset.name] = ikea[el.dataset.name] || {c:0,p:p}; ikea[el.dataset.name].c++; }
             else { custom.push({n:el.dataset.name, dim:el.dataset.dims, c:el.dataset.color}); }
         });
-
         if(Object.keys(ikea).length > 0) {
             html += `<h2>IKEA Einkaufsliste</h2><table><tr><th>Artikel</th><th>Anzahl</th><th>Einzelpreis</th><th>Gesamt</th></tr>`;
             for(const [n, d] of Object.entries(ikea)) html += `<tr><td>${n}</td><td>${d.c}</td><td>€${d.p.toFixed(2)}</td><td>€${(d.c*d.p).toFixed(2)}</td></tr>`;
@@ -563,17 +716,14 @@
             html += `</table>`;
         }
         html += `<h3>Gesamtsumme: €${total.toFixed(2)}</h3><script>window.print()<\/script></body></html>`;
-
-        win.document.write(html);
-        win.document.close();
+        win.document.write(html); win.document.close();
     }
 
-    // --- EDIT MODAL ---
     let editTarget = null;
     function openEdit(el) { editTarget=el; document.getElementById('editName').value=el.dataset.name; document.getElementById('editColor').value=el.dataset.color||"#0058a3"; document.getElementById('editModal').style.display='flex'; }
     function saveEdit() { 
         if(editTarget) {
-            editTarget.dataset.name=document.getElementById('editName').value; 
+            editTarget.dataset.name=document.getElementById('editName').value;
             if(editTarget.classList.contains('accessory')) {
                 const c = document.getElementById('editColor').value;
                 const txt = getContrastColor(c);
@@ -582,14 +732,13 @@
                 editTarget.innerHTML=`<strong>${editTarget.dataset.name}</strong>`;
             } else { editTarget.title=editTarget.dataset.name; }
         }
-        closeEdit(); 
+        closeEdit();
     }
     function closeEdit(){ document.getElementById('editModal').style.display='none'; editTarget=null; }
-
     function adjustColor(c,a){if(!c||!c.startsWith('#'))return'#000';return'#'+c.replace(/^#/, '').replace(/../g,c=>('0'+Math.min(255,Math.max(0,parseInt(c,16)+a)).toString(16)).substr(-2));}
     function updatePrice(){ let t=0; document.querySelectorAll('.item').forEach(el=>t+=parseFloat(el.dataset.price||0)); document.getElementById('totalPrice').innerText='€'+t.toFixed(2); }
+    
     resizeWall();
 </script>
 </body>
-
 </html>
