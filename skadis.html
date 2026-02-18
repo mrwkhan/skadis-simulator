@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SKÅDIS Ultimate Hybrid v6</title>
+    <title>SKÅDIS Planer v7 (Keyboard)</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             margin: 0; height: 100vh; display: flex; overflow: hidden; background: #e0e0e0; 
-            overscroll-behavior: none; user-select: none;
+            overscroll-behavior: none; /* Verhindert "Gummiband"-Effekt auf Mac/iOS */
         }
         
         /* --- SIDEBAR --- */
         .sidebar { 
-            width: 340px; background: white; padding: 0; display: flex; flex-direction: column; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 200; 
+            width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 200; overflow-y: auto;
             position: absolute; height: 100%; left: 0; top: 0; 
             transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar-content { padding: 20px; overflow-y: auto; flex: 1; }
         
+        /* Desktop: Sidebar immer sichtbar */
         @media (min-width: 1024px) {
-            .sidebar { position: relative; transform: none; width: 360px; }
+            .sidebar { position: relative; transform: none; width: 380px; }
             .sidebar-toggle { display: none !important; }
+            .close-sidebar-btn { display: none; }
         }
 
         .sidebar-toggle { 
@@ -37,82 +38,86 @@
 
         h2 { color: #0058a3; margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #ffdb00; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         
-        /* --- CATALOG TILES (DRAGGABLE) --- */
-        .catalog-group { margin-bottom: 20px; }
-        .group-title { font-weight: bold; font-size: 0.9rem; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .control-group { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #333; }
         
-        .catalog-item {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px;
-            padding: 10px; margin-bottom: 8px; cursor: grab;
-            transition: all 0.2s;
-        }
-        .catalog-item:hover { background: #f0f8ff; border-color: #0058a3; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .catalog-item:active { cursor: grabbing; transform: scale(0.98); }
+        input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 6px; margin-bottom: 8px; font-size: 0.95rem; }
         
-        .item-icon { width: 30px; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; color: white; margin-right: 10px; }
-        .item-info { flex: 1; }
-        .item-name { font-weight: 600; font-size: 0.9rem; color: #333; display: block; }
-        .item-meta { font-size: 0.75rem; color: #777; }
-        .add-icon { color: #0058a3; font-weight: bold; font-size: 1.2rem; margin-left: 10px; }
-
-        /* --- BUTTONS & INPUTS --- */
-        input, select { width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button.action-btn { width: 100%; padding: 10px; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 4px; margin-bottom: 5px; }
-        .btn-blue { background: #0058a3; } 
+        .btn-blue { background: #0058a3; } .btn-blue:active { background: #004f93; transform: scale(0.98); }
+        .btn-dark { background: #333; } .btn-dark:active { background: #555; transform: scale(0.98); }
         .btn-green { background: #008a00; } 
-        .btn-red { background: #cc0000; }
         .btn-orange { background: #d68300; } 
+        .btn-red { background: #cc0000; }
+        .btn-group { display: flex; gap: 8px; margin-top: 5px; }
+        
+        .price-tag { font-size: 1.5rem; color: #0058a3; font-weight: bold; text-align: right; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; }
+        
+        .flex-row { display: flex; gap: 10px; }
+        .flex-col { flex: 1; display: flex; flex-direction: column; }
+        .flex-col small { font-size: 0.75rem; color: #666; margin-bottom: 4px; }
 
         /* --- WORKSPACE --- */
         .workspace { 
             flex-grow: 1; overflow: hidden; position: relative; background-color: #d4d4d4; 
-            touch-action: none; 
+            touch-action: none; /* WICHTIG: Deaktiviert Browser-Gesten im Arbeitsbereich */
         }
         
         #zoomContainer { transform-origin: 0 0; position: absolute; top: 50%; left: 50%; transition: transform 0.1s linear; }
         #wall { background-color: #e5e5e5; border: 4px solid #444; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: translate(-50%, -50%); }
         .grid-on { background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px); background-size: 10px 10px; }
         
-        /* --- ITEMS ON WALL --- */
-        .item { position: absolute; box-sizing: border-box; touch-action: none; cursor: grab; }
-        .item:active { cursor: grabbing; }
+        /* --- ITEMS --- */
+        .item { 
+            position: absolute; box-sizing: border-box; 
+            user-select: none; -webkit-user-select: none; 
+            touch-action: none; cursor: grab;
+        }
         .item.selected { border: 2px solid #ff0000 !important; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); z-index: 9999 !important; }
-        
-        /* Styles for specific items */
+
         .item.board { z-index: 10; border: 1px solid #999; border-radius: 12px; overflow: hidden; }
         .board-white { background-color: #ffffff; }
         .board-wood { background-color: #e3cbb3; border-color: #cbb092 !important; }
         .board-black { background-color: #333333; border-color: #111 !important; }
+
         .sim-hole { position: absolute; width: 2.5px; height: 7.5px; border-radius: 1.25px; background-color: rgba(0,0,0,0.18); transform: translate(-50%, -50%); pointer-events: none; }
         .board-black .sim-hole { background-color: rgba(255,255,255,0.25); }
+        .mount-point { position: absolute; width: 14px; height: 14px; background: rgba(255, 0, 0, 0.3); border: 1.5px solid red; border-radius: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; z-index: 15; pointer-events: none; }
         .item.accessory { z-index: 50; border: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-radius: 4px; overflow: hidden; padding: 2px; line-height: 1.1; font-weight: bold; }
 
         /* --- UI OVERLAYS --- */
         .overlay-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
-        .ctrl-btn { width: 40px; height: 40px; background: white; border: 1px solid #ccc; border-radius: 8px; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .ctrl-btn { width: 44px; height: 44px; background: white; border: 1px solid #ccc; border-radius: 8px; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; color: #333; }
         
         .status-bar { 
             position: absolute; bottom: 0; left: 0; width: 100%;
-            background: rgba(255,255,255,0.95); padding: 8px 15px; 
+            background: rgba(255,255,255,0.95); padding: 10px 15px; 
             border-top: 1px solid #ccc; font-size: 0.85rem; 
             display: flex; justify-content: space-between; align-items: center;
-            box-sizing: border-box; z-index: 100;
+            box-sizing: border-box; z-index: 100; pointer-events: none;
         }
 
-        #deleteBtn {
-            display: none; position: fixed; bottom: 60px; right: 20px;
-            width: 55px; height: 55px; border-radius: 50%;
-            background: #cc0000; color: white; border: none;
+        /* Floating Action Buttons (Delete & Edit) */
+        .floating-actions {
+            position: fixed; bottom: 60px; right: 20px;
+            display: flex; flex-direction: column; gap: 15px;
+            z-index: 150;
+        }
+        
+        .fab-btn {
+            width: 55px; height: 55px; border-radius: 50%; border: none;
+            color: white; font-size: 24px; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            font-size: 24px; z-index: 150; cursor: pointer;
+            display: none; /* Hidden by default */
             align-items: center; justify-content: center;
+            transition: transform 0.2s;
         }
-
+        .fab-btn:active { transform: scale(0.9); }
+        #delBtn { background: #cc0000; }
+        #editBtn { background: #0058a3; }
+        
         #editModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-        .flex-row { display: flex; gap: 5px; }
-        .flex-col { flex: 1; }
     </style>
 </head>
 <body>
@@ -120,56 +125,95 @@
 <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
 
 <div class="sidebar" id="sidebar">
-    <div class="sidebar-content">
-        <h2>
-            SKÅDIS Hybrid v6
-            <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.5rem; color:#333; cursor:pointer;">×</button>
-        </h2>
-        
-        <div style="background:#fff3cd; padding:8px; border-radius:4px; font-size:0.8rem; margin-bottom:15px; border:1px solid #ffeeba;">
-            💡 <strong>Tipp:</strong> Anklicken (Mobile) ODER auf die Wand ziehen (Desktop).
-        </div>
-
-        <div class="group-title">1. Projekt</div>
-        <div class="flex-row">
-            <button class="action-btn btn-orange" onclick="exportJSON()">💾 Save</button>
-            <button class="action-btn btn-orange" onclick="document.getElementById('fileInput').click()">📂 Load</button>
+    <h2>
+        SKÅDIS Planer v7
+        <button onclick="toggleSidebar()" class="close-sidebar-btn" style="background:none; border:none; font-size:1.5rem; color:#333; width:auto; padding:0;">×</button>
+    </h2>
+    
+    <div class="control-group">
+        <label>Projekt</label>
+        <div class="btn-group">
+            <button class="btn-orange" onclick="exportJSON()">💾 Speichern</button>
+            <button class="btn-orange" onclick="document.getElementById('fileInput').click()">📂 Laden</button>
         </div>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(this)" accept=".json">
-        <button class="action-btn btn-green" onclick="exportPrint()">🖨️ PDF Export</button>
-        
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <button class="btn-green" onclick="exportPrint()">🖨️ PDF / Drucken</button>
+        <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="gridCheck" checked onchange="toggleGrid()" style="width:auto; margin:0; height:20px; width:20px;"> 
+            <label for="gridCheck" style="margin:0;">2cm Raster</label>
+        </div>
+    </div>
 
-        <div class="group-title">2. Wand & Basis</div>
-        <div class="flex-row" style="margin-bottom:10px;">
+    <div class="control-group">
+        <label>1. Wandgröße (cm)</label>
+        <div class="flex-row">
             <div class="flex-col"><small>Breite</small><input type="number" id="wallW" value="100" onchange="resizeWall()"></div>
             <div class="flex-col"><small>Höhe</small><input type="number" id="wallH" value="150" onchange="resizeWall()"></div>
         </div>
-        
-        <select id="boardSizeSel">
-            <option value="9.99|36|56">36x56 cm (€9,99)</option>
-            <option value="14.99|56|56">56x56 cm (€14,99)</option>
-            <option value="17.99|76|56">76x56 cm (€17,99)</option>
-        </select>
-        <select id="boardColorSel">
-            <option value="white">Weiß</option>
-            <option value="wood">Holz</option>
-            <option value="black">Schwarz</option>
-        </select>
-        <button class="action-btn btn-blue" onclick="spawnBoard()">➕ Platte hinzufügen</button>
-
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        
-        <div id="catalogContainer"></div>
-
-        <div class="group-title">Custom (3D Druck)</div>
-        <button class="action-btn btn-dark" onclick="spawnCustom()">➕ Custom Teil erstellen</button>
-
-        <div style="font-size:1.2rem; font-weight:bold; text-align:right; color:#0058a3; margin-top:20px;">
-            Summe: <span id="totalPrice">€0.00</span>
-        </div>
-        <br><br>
+        <button class="btn-red" onclick="clearWall()">⚠️ Alles löschen</button>
     </div>
+
+    <div class="control-group">
+        <label>2. Platte hinzufügen</label>
+        <small style="display:block; margin-bottom:5px; color:#666;">Tippen um auf die Wand zu werfen</small>
+        <div class="flex-row">
+            <select id="boardSel" style="flex-grow:2;">
+                <option value="9.99" data-w="36" data-h="56">36x56 cm (€9,99)</option>
+                <option value="14.99" data-w="56" data-h="56">56x56 cm (€14,99)</option>
+                <option value="17.99" data-w="76" data-h="56">76x56 cm (€17,99)</option>
+            </select>
+            <select id="boardColor" style="flex-grow:1;">
+                <option value="white">Weiß</option>
+                <option value="wood">Holz</option>
+                <option value="black">Schwarz</option>
+            </select>
+        </div>
+        <button class="btn-blue" onclick="spawnBoard()">➕ Platte auf Wand werfen</button>
+    </div>
+
+    <div class="control-group">
+        <label>3. Zubehör hinzufügen</label>
+        <select id="accType" onchange="toggleCustomInput()">
+            <optgroup label="Behälter & Aufbewahrung">
+                <option value="std" data-price="3.00" data-w="11" data-h="11">Behälter (€3)</option>
+                <option value="std" data-price="10.00" data-w="11" data-h="24">Behälter m. Deckel 3er (€10)</option>
+                <option value="std" data-price="4.00" data-w="27" data-h="6">Ablage (€4)</option>
+                <option value="std" data-price="5.00" data-w="20" data-h="25">Beutel (€5)</option>
+            </optgroup>
+            <optgroup label="Haken">
+                <option value="std" data-price="3.00" data-w="4" data-h="6">Haken kurz (€3)</option>
+                <option value="std" data-price="3.00" data-w="4" data-h="10">Haken lang (€3)</option>
+                <option value="std" data-price="3.00" data-w="4" data-h="8">Haken J-Form (€3)</option>
+            </optgroup>
+            <optgroup label="Spezialhalter">
+                <option value="std" data-price="3.00" data-w="28" data-h="10">Rollenhalter (€3)</option>
+                <option value="std" data-price="2.00" data-w="19" data-h="4">Werkzeughalter (€2)</option>
+                <option value="std" data-price="3.00" data-w="4" data-h="6">Halter Zange/Schere (€3)</option>
+                <option value="std" data-price="3.00" data-w="4" data-h="4">Klemme 2er (€3)</option>
+            </optgroup>
+            <optgroup label="Montage & Custom">
+                <option value="std" data-price="5.00" data-w="4" data-h="10">Befestigungsbeschlag (€5)</option>
+                <option value="custom">-- Manuelles Teil (3D Druck) --</option>
+            </optgroup>
+        </select>
+
+        <div id="customInputs" style="display:none; margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
+            <div class="flex-row">
+                <div class="flex-col"><small>Breite</small><input type="number" id="custW" value="10"></div>
+                <div class="flex-col"><small>Höhe</small><input type="number" id="custH" value="10"></div>
+            </div>
+            <input type="text" id="custName" placeholder="Name" style="margin-top:5px;">
+            <div class="flex-row">
+                <input type="color" id="custColor" value="#ff8800" style="height:40px;">
+                <input type="number" id="custPrice" value="0.50" step="0.10">
+            </div>
+        </div>
+
+        <button class="btn-dark" onclick="spawnAccessory()">➕ Teil auf Wand werfen</button>
+    </div>
+
+    <div class="price-tag" id="totalPrice">€0.00</div>
+    <div style="height: 50px;"></div>
 </div>
 
 <div class="workspace" id="workspace">
@@ -183,386 +227,307 @@
         <button class="ctrl-btn" onclick="resetView()">⟲</button>
     </div>
     
-    <button id="deleteBtn" onclick="deleteSelected()">🗑️</button>
+    <div class="floating-actions">
+        <button class="fab-btn" id="editBtn" onclick="openEdit(selectedItem)">✏️</button>
+        <button class="fab-btn" id="delBtn" onclick="deleteSelected()">🗑️</button>
+    </div>
 
     <div class="status-bar">
+        <div id="statusText">Tippen = Bewegen | 2 Finger = Zoom</div>
         <div><span id="coords">x: -, y: -</span></div>
-        <div style="font-size:0.7rem; color:#666;">v6.0 Hybrid</div>
     </div>
 </div>
 
 <div id="editModal">
     <div class="modal-content">
-        <h3>Bearbeiten</h3>
+        <h3 style="margin-top:0;">Bearbeiten</h3>
         <label>Name:</label>
         <input type="text" id="editName">
         <label>Farbe:</label>
-        <input type="color" id="editColor" style="height:40px;">
-        <div class="flex-row">
-            <button class="action-btn btn-blue" onclick="saveEdit()">OK</button>
-            <button class="action-btn btn-dark" onclick="closeEdit()">Abbruch</button>
+        <input type="color" id="editColor" style="height:50px;">
+        <div class="btn-group">
+            <button class="btn-blue" onclick="saveEdit()">Speichern</button>
+            <button class="btn-dark" onclick="closeEdit()">Abbrechen</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- DATEN KATALOG ---
-    const catalogData = [
-        { cat: "Behälter", items: [
-            { name: "Behälter", price: 3, w: 11, h: 11, color: "#ffffff" },
-            { name: "Behälter lang", price: 10, w: 11, h: 24, color: "#ffffff" },
-            { name: "Ablage", price: 4, w: 27, h: 6, color: "#ffffff" },
-        ]},
-        { cat: "Haken", items: [
-            { name: "Haken kurz", price: 3, w: 4, h: 6, color: "#dddddd" },
-            { name: "Haken lang", price: 3, w: 4, h: 10, color: "#dddddd" },
-            { name: "Haken J", price: 3, w: 4, h: 8, color: "#999999" },
-        ]},
-        { cat: "Halter", items: [
-            { name: "Rollenhalter", price: 3, w: 28, h: 10, color: "#dddddd" },
-            { name: "Werkzeug", price: 2, w: 19, h: 4, color: "#dddddd" },
-            { name: "Klemmen", price: 3, w: 4, h: 4, color: "#dddddd" },
-        ]}
-    ];
-
-    // --- SETUP ---
+    // --- KONFIGURATION ---
     const scale = 5; 
+    
+    // --- DOM ELEMENTE ---
     const workspace = document.getElementById('workspace');
     const wallDiv = document.getElementById('wall');
     const zoomContainer = document.getElementById('zoomContainer');
-    const deleteBtn = document.getElementById('deleteBtn');
-    
-    // View State
-    let currentZoom = 0.8;
+    const coordsSpan = document.getElementById('coords');
+    const sidebar = document.getElementById('sidebar');
+    const delBtn = document.getElementById('delBtn');
+    const editBtn = document.getElementById('editBtn');
+
+    // --- VIEW STATE ---
+    let currentZoom = 0.8; 
     let panX = 0, panY = 0;
     
-    // Interaction State
-    let selectedItem = null;
-    let isPanning = false; 
-    let startPanX=0, startPanY=0;
-    let isDraggingItem = false; 
-    let dragItem=null; 
-    let dragOffsetX=0, dragOffsetY=0;
+    // --- TOUCH/MOUSE STATE ---
+    let isPanning = false;
+    let startPanX = 0, startPanY = 0;
+    let lastPinchDist = null;
+    let initialZoom = 1;
 
-    // --- INIT ---
-    renderCatalog();
+    let selectedItem = null;
+    let isDraggingItem = false;
+    let dragItem = null;
+    let dragOffsetX = 0, dragOffsetY = 0;
+
+    // --- INITIALISIERUNG ---
     resizeWall();
     centerWall();
-    updatePrice();
 
-    // --- RENDER SIDEBAR ---
-    function renderCatalog() {
-        const container = document.getElementById('catalogContainer');
-        let html = '';
-        
-        catalogData.forEach(group => {
-            html += `<div class="group-title">${group.cat}</div>`;
-            group.items.forEach(item => {
-                // WICHTIG: draggable="true" für Desktop Drag & Drop
-                // onclick für Mobile Click-to-Spawn
-                const json = JSON.stringify(item).replace(/"/g, '&quot;');
-                html += `
-                <div class="catalog-item" draggable="true" 
-                     ondragstart="handleSidebarDragStart(event, '${json}')" 
-                     onclick='spawnItem(${JSON.stringify(item)})'>
-                    <div class="item-icon" style="background:${item.color}; border:1px solid #ccc;"></div>
-                    <div class="item-info">
-                        <span class="item-name">${item.name}</span>
-                        <span class="item-meta">${item.w}x${item.h} cm • €${item.price.toFixed(2)}</span>
-                    </div>
-                    <div class="add-icon">+</div>
-                </div>`;
-            });
-        });
-        container.innerHTML = html;
+    function toggleSidebar() { sidebar.classList.toggle('open'); }
+
+    // --- ZOOM & PAN ---
+    function updateTransform() { zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`; }
+    function changeZoom(delta) { currentZoom = Math.min(Math.max(currentZoom + delta, 0.2), 3.0); updateTransform(); }
+    function resetView() { centerWall(); }
+    function centerWall() {
+        panX = 0; panY = 0; 
+        currentZoom = window.innerWidth < 600 ? 0.5 : 0.8;
+        updateTransform();
     }
 
-    // --- HYBRID SPAWN LOGIC ---
-    
-    // 1. CLICK SPAWN (Mobile & Desktop Click)
-    function spawnItem(data) {
-        data.type = 'accessory';
-        data.datasetType = 'ikea';
-        createItem(data);
-    }
-    
-    function spawnBoard() {
-        const sizeVal = document.getElementById('boardSizeSel').value.split('|');
-        const color = document.getElementById('boardColorSel').value;
-        createItem({
-            type: 'board',
-            price: parseFloat(sizeVal[0]),
-            w: parseInt(sizeVal[1]),
-            h: parseInt(sizeVal[2]),
-            name: 'Board',
-            variant: color,
-            datasetType: 'ikea'
-        });
-    }
-
-    function spawnCustom() {
-        createItem({
-            type: 'accessory', datasetType: 'custom', isCustom: true,
-            name: 'Custom', price: 0.50, w: 10, h: 10, color: '#ff8800'
-        });
-    }
-
-    // 2. DESKTOP DRAG FROM SIDEBAR
-    function handleSidebarDragStart(e, itemJson) {
-        e.dataTransfer.setData("application/json", itemJson);
-        e.dataTransfer.effectAllowed = "copy";
-    }
-
-    // Drop Handler auf der WAND (für Desktop Drag aus Sidebar)
-    wallDiv.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
-    wallDiv.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const json = e.dataTransfer.getData("application/json");
-        if (json) {
-            const data = JSON.parse(json);
-            data.type = 'accessory';
-            data.datasetType = 'ikea';
-            
-            const el = createItem(data, false); // false = nicht automatisch zentrieren
-            
-            // Position berechnen basierend auf Mauszeiger beim Drop
-            const wallRect = wallDiv.getBoundingClientRect();
-            let x = (e.clientX - wallRect.left) / currentZoom - (data.w*scale/2);
-            let y = (e.clientY - wallRect.top) / currentZoom - (data.h*scale/2);
-            
-            // Snap
-            x = Math.round(x / 5) * 5; 
-            y = Math.round(y / 5) * 5;
-            
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-        }
-    });
-
-
-    // --- CORE ITEM CREATION ---
-    function createItem(data, center = true) {
-        const el = document.createElement('div');
-        el.className = 'item ' + data.type;
-        el.style.width = (data.w * scale) + 'px';
-        el.style.height = (data.h * scale) + 'px';
-        
-        if (data.type === 'board') {
-            el.classList.add('board-' + (data.variant || 'white'));
-            el.dataset.variant = data.variant;
-            generateHoles(el, data.w, data.h);
-        } else {
-            const c = data.color || "#ffffff";
-            el.style.backgroundColor = c;
-            el.style.color = getContrastColor(c);
-            el.style.borderColor = adjustColor(c, -40);
-            const fs = Math.max(10, Math.min(14, Math.min(data.w, data.h)*scale/4));
-            el.style.fontSize = fs+'px';
-            el.innerHTML = `<span>${data.name}</span>`;
-        }
-
-        el.dataset.name = data.name;
-        el.dataset.price = data.price;
-        el.dataset.type = data.datasetType;
-        if(data.isCustom) { el.dataset.color = data.color; }
-
-        if (center) {
-            // Mitte des sichtbaren Bereichs oder Mitte der Wand
-            const wallW = parseFloat(wallDiv.style.width);
-            const wallH = parseFloat(wallDiv.style.height);
-            el.style.left = (wallW/2 - (data.w*scale)/2) + 'px';
-            el.style.top = (wallH/2 - (data.h*scale)/2) + 'px';
-        } else {
-            el.style.left = '0px'; el.style.top = '0px';
-        }
-
-        el.addEventListener('dblclick', () => openEdit(el));
-        
-        wallDiv.appendChild(el);
-        selectItem(el);
-        updatePrice();
-        return el;
-    }
-
-    // --- INTERACTION LOGIC (TOUCH & MOUSE UNIFIED) ---
-    // Handling für Bewegen auf der Wand (für bereits platzierte Items)
-    
-    workspace.addEventListener('touchstart', handleInputStart, {passive:false});
-    workspace.addEventListener('mousedown', handleInputStart);
-    
-    window.addEventListener('touchmove', handleInputMove, {passive:false});
-    window.addEventListener('mousemove', handleInputMove);
-    
-    window.addEventListener('touchend', handleInputEnd);
-    window.addEventListener('mouseup', handleInputEnd);
-    
+    // --- UNIFIED INPUT HANDLER (TOUCH & MOUSE) ---
+    workspace.addEventListener('touchstart', handleTouchStart, {passive: false});
+    workspace.addEventListener('touchmove', handleTouchMove, {passive: false});
+    workspace.addEventListener('touchend', handleTouchEnd);
+    workspace.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
     workspace.addEventListener('wheel', (e) => { e.preventDefault(); changeZoom(-Math.sign(e.deltaY)*0.1); }, {passive:false});
 
-    function handleInputStart(e) {
-        // Ignorieren wenn wir editieren
-        if(e.target.closest('#sidebar') || e.target.closest('.overlay-controls')) return;
-
-        const isTouch = e.type === 'touchstart';
-        const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-        const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-        const target = e.target.closest('.item');
-
-        // 1. Item Dragging
-        if (target && (!isTouch || e.touches.length === 1)) {
-            if(isTouch) { e.stopPropagation(); e.preventDefault(); } // Stop iOS scroll
-            selectItem(target);
-            isDraggingItem = true;
-            dragItem = target;
-            const rect = dragItem.getBoundingClientRect();
-            dragOffsetX = clientX - rect.left;
-            dragOffsetY = clientY - rect.top;
-            dragItem.style.opacity = '0.7';
+    // Touch Implementation
+    function handleTouchStart(e) {
+        const item = e.target.closest('.item');
+        if (item && e.touches.length === 1) {
+            e.stopPropagation(); e.preventDefault();
+            selectItem(item);
+            startDragItem(item, e.touches[0].clientX, e.touches[0].clientY);
             return;
         }
-
-        // 2. Pan / Zoom Background
-        if (!target) {
-            deselectItem();
-            // Pinch Zoom (Touch only)
-            if (isTouch && e.touches.length === 2) {
-                isPanning = false;
-                lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                initialZoom = currentZoom;
-            } 
-            // Pan
-            else {
-                isPanning = true;
-                startPanX = clientX - panX;
-                startPanY = clientY - panY;
-                workspace.style.cursor = 'grabbing';
-            }
+        if (e.touches.length === 2) {
+            isPanning = false;
+            lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            initialZoom = currentZoom;
+        } else if (e.touches.length === 1) {
+            if(selectedItem) deselectItem();
+            isPanning = true;
+            startPanX = e.touches[0].clientX - panX;
+            startPanY = e.touches[0].clientY - panY;
         }
     }
-
-    function handleInputMove(e) {
-        const isTouch = e.type === 'touchmove';
-        const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-        const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-
+    function handleTouchMove(e) {
         if (isDraggingItem && dragItem) {
             e.preventDefault();
-            const wallRect = wallDiv.getBoundingClientRect();
-            let x = (clientX - wallRect.left - dragOffsetX) / currentZoom;
-            let y = (clientY - wallRect.top - dragOffsetY) / currentZoom;
-            x = Math.round(x / 5) * 5; 
-            y = Math.round(y / 5) * 5;
-            dragItem.style.left = x + 'px';
-            dragItem.style.top = y + 'px';
-            updateCoords();
-        } 
-        else if (isTouch && e.touches.length === 2 && lastPinchDist) {
+            moveDragItem(e.touches[0].clientX, e.touches[0].clientY);
+        } else if (e.touches.length === 2 && lastPinchDist) {
             e.preventDefault();
             const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
             currentZoom = Math.min(Math.max(initialZoom + (dist - lastPinchDist) * 0.005, 0.2), 3.0);
             updateTransform();
-        }
-        else if (isPanning) {
+        } else if (isPanning) {
             e.preventDefault();
-            panX = clientX - startPanX;
-            panY = clientY - startPanY;
+            panX = e.touches[0].clientX - startPanX;
+            panY = e.touches[0].clientY - startPanY;
             updateTransform();
         }
     }
+    function handleTouchEnd() { isPanning = false; lastPinchDist = null; stopDragItem(); }
 
-    function handleInputEnd() {
-        if (dragItem) dragItem.style.opacity = '1';
-        isDraggingItem = false;
-        dragItem = null;
-        isPanning = false;
-        lastPinchDist = null;
-        workspace.style.cursor = 'default';
+    // Mouse Implementation
+    function handleMouseDown(e) {
+        const item = e.target.closest('.item');
+        if (item) {
+            e.stopPropagation();
+            selectItem(item);
+            startDragItem(item, e.clientX, e.clientY);
+        } else {
+            deselectItem();
+            isPanning = true;
+            startPanX = e.clientX - panX;
+            startPanY = e.clientY - panY;
+            workspace.style.cursor = 'grabbing';
+        }
+    }
+    function handleMouseMove(e) {
+        if (isDraggingItem) { e.preventDefault(); moveDragItem(e.clientX, e.clientY); }
+        else if (isPanning) { e.preventDefault(); panX = e.clientX - startPanX; panY = e.clientY - startPanY; updateTransform(); }
+    }
+    function handleMouseUp() { isPanning = false; workspace.style.cursor = 'default'; stopDragItem(); }
+
+    // --- ITEM DRAG ---
+    function startDragItem(item, cx, cy) {
+        isDraggingItem = true; dragItem = item; dragItem.style.opacity = '0.7';
+        const rect = dragItem.getBoundingClientRect();
+        dragOffsetX = cx - rect.left; dragOffsetY = cy - rect.top;
+    }
+    function moveDragItem(cx, cy) {
+        if (!dragItem) return;
+        const wallRect = wallDiv.getBoundingClientRect();
+        let x = (cx - wallRect.left - dragOffsetX) / currentZoom;
+        let y = (cy - wallRect.top - dragOffsetY) / currentZoom;
+        x = Math.round(x / 5) * 5; y = Math.round(y / 5) * 5;
+        dragItem.style.left = x + 'px'; dragItem.style.top = y + 'px';
+        updateCoordsDisplay();
+    }
+    function stopDragItem() { if (dragItem) dragItem.style.opacity = '1'; isDraggingItem = false; dragItem = null; }
+
+    // --- SELECTION & KEYBOARD SUPPORT ---
+    function selectItem(el) {
+        if (selectedItem) selectedItem.classList.remove('selected');
+        selectedItem = el; selectedItem.classList.add('selected');
+        
+        // Buttons anzeigen
+        delBtn.style.display = 'flex';
+        editBtn.style.display = 'flex';
+        
+        updateCoordsDisplay();
     }
 
-    // --- KEYBOARD SUPPORT ---
+    function deselectItem() {
+        if (selectedItem) selectedItem.classList.remove('selected');
+        selectedItem = null;
+        delBtn.style.display = 'none';
+        editBtn.style.display = 'none';
+        coordsSpan.innerText = "x: -, y: -";
+    }
+
+    function deleteSelected() {
+        if (selectedItem) {
+            selectedItem.remove();
+            deselectItem();
+            updatePrice();
+        }
+    }
+
+    // *** NEU: TASTATURSTEUERUNG ***
     document.addEventListener('keydown', (e) => {
+        // Ignorieren wenn man gerade tippt
         if (e.target.tagName === 'INPUT') return;
         if (!selectedItem) return;
-        
-        const step = e.shiftKey ? 10 : 5;
+
+        const step = e.shiftKey ? 20 : 5; // Normal 5px (1cm), Shift 20px (4cm)
         let l = parseInt(selectedItem.style.left);
         let t = parseInt(selectedItem.style.top);
+        let moved = false;
 
         switch(e.key) {
-            case 'Delete': case 'Backspace': deleteSelected(); break;
-            case 'ArrowLeft': selectedItem.style.left=(l-step)+'px'; break;
-            case 'ArrowRight': selectedItem.style.left=(l+step)+'px'; break;
-            case 'ArrowUp': selectedItem.style.top=(t-step)+'px'; break;
-            case 'ArrowDown': selectedItem.style.top=(t+step)+'px'; break;
+            case 'Delete': 
+            case 'Backspace':
+                deleteSelected();
+                return; // Stop here
+            case 'ArrowLeft': selectedItem.style.left = (l - step) + 'px'; moved = true; break;
+            case 'ArrowRight': selectedItem.style.left = (l + step) + 'px'; moved = true; break;
+            case 'ArrowUp': selectedItem.style.top = (t - step) + 'px'; moved = true; break;
+            case 'ArrowDown': selectedItem.style.top = (t + step) + 'px'; moved = true; break;
         }
-        updateCoords();
+
+        if(moved) {
+            e.preventDefault(); // Verhindert Scrollen der Seite
+            updateCoordsDisplay();
+        }
     });
 
-    // --- HELPERS ---
-    function resizeWall() {
-        wallDiv.style.width = (document.getElementById('wallW').value * scale) + 'px';
-        wallDiv.style.height = (document.getElementById('wallH').value * scale) + 'px';
-    }
-    function updateTransform() { zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`; }
-    function centerWall() { panX = 0; panY = 0; currentZoom = window.innerWidth<800?0.5:0.8; updateTransform(); }
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
-    
-    function generateHoles(el, w, h) {
-        for(let r=0; r<27; r++) {
-            const indent = r%2===0;
-            const xStart = indent?4:2;
-            for(let x=xStart; x<=w-2; x+=4) {
-                const d = document.createElement('div'); d.className='sim-hole';
-                d.style.left=(x*scale)+'px'; d.style.top=(2+(r*2))*scale+'px';
-                el.appendChild(d);
-            }
+    // --- ITEM CREATION ---
+    function spawnItemOnWall(data) {
+        const el = document.createElement('div'); el.className = 'item ' + data.type;
+        el.style.width = (data.w * scale) + 'px'; el.style.height = (data.h * scale) + 'px';
+        
+        if (data.type === 'board') {
+            el.classList.add('board-' + (data.variant || 'white')); el.dataset.variant = data.variant;
+            generateHoles(el, data.w, data.h);
+        } else {
+            const color = data.color || "#0058a3";
+            el.style.backgroundColor = color;
+            el.style.borderColor = adjustColor(color, -40);
+            el.style.color = getContrastColor(color);
+            el.style.fontSize = Math.max(10, Math.min(16, Math.min(data.w, data.h)*scale/4))+'px';
+            el.innerHTML = `<span>${data.name}</span>`;
         }
-    }
-    
-    function selectItem(el) {
-        if(selectedItem) selectedItem.classList.remove('selected');
-        selectedItem = el; selectedItem.classList.add('selected');
-        deleteBtn.style.display = 'flex';
-        updateCoords();
-    }
-    function deselectItem() {
-        if(selectedItem) selectedItem.classList.remove('selected');
-        selectedItem = null; deleteBtn.style.display = 'none';
-        document.getElementById('coords').innerText = "x: -, y: -";
-    }
-    function deleteSelected() { if(selectedItem){selectedItem.remove(); deselectItem(); updatePrice();} }
-    function updateCoords() {
-        if(selectedItem) document.getElementById('coords').innerText = `Pos: ${Math.round(parseInt(selectedItem.style.left)/scale)} / ${Math.round(parseInt(selectedItem.style.top)/scale)} cm`;
-    }
-    
-    function updatePrice(){ let t=0; document.querySelectorAll('.item').forEach(el=>t+=parseFloat(el.dataset.price||0)); document.getElementById('totalPrice').innerText='€'+t.toFixed(2); }
-    function getContrastColor(hex){if(!hex)return'black';const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return ((r*299)+(g*587)+(b*114))/1000>=128?'black':'white';}
-    function adjustColor(c,a){return c;} // Simplified for brevity
 
-    // Editor
+        el.dataset.name = data.name; el.dataset.price = data.price; el.dataset.type = data.datasetType;
+        if(data.isCustom) { el.dataset.color = data.color; }
+
+        // Center position
+        const wallW = parseFloat(wallDiv.style.width);
+        const wallH = parseFloat(wallDiv.style.height);
+        el.style.left = (wallW/2 - (data.w*scale)/2) + 'px';
+        el.style.top = (wallH/2 - (data.h*scale)/2) + 'px';
+
+        el.addEventListener('dblclick', () => openEdit(el)); // Desktop dblclick
+        wallDiv.appendChild(el);
+        selectItem(el);
+        updatePrice();
+    }
+
+    function spawnBoard() {
+        const sel = document.getElementById('boardSel'), opt = sel.options[sel.selectedIndex];
+        spawnItemOnWall({ type: 'board', price: parseFloat(sel.value), w: parseInt(opt.dataset.w), h: parseInt(opt.dataset.h), name: 'Board', variant: document.getElementById('boardColor').value, datasetType: 'ikea' });
+    }
+    function spawnAccessory() {
+        const type = document.getElementById('accType').value;
+        let data = { type: 'accessory' };
+        if (type === 'custom') {
+            data.isCustom = true; data.name = document.getElementById('custName').value || "Teil"; data.datasetType = 'custom';
+            data.w = parseFloat(document.getElementById('custW').value)||10; data.h = parseFloat(document.getElementById('custH').value)||10;
+            data.price = parseFloat(document.getElementById('custPrice').value)||0; data.color = document.getElementById('custColor').value;
+        } else {
+            const sel = document.getElementById('accType'); const opt = sel.options[sel.selectedIndex];
+            data.name = opt.text.split(' (')[0]; data.price = parseFloat(opt.getAttribute('data-price'));
+            data.w = parseFloat(opt.getAttribute('data-w')); data.h = parseFloat(opt.getAttribute('data-h'));
+            data.datasetType = 'ikea';
+        }
+        spawnItemOnWall(data);
+    }
+
+    // --- UTILS ---
+    function updatePrice(){ let t=0; document.querySelectorAll('.item').forEach(el=>t+=parseFloat(el.dataset.price||0)); document.getElementById('totalPrice').innerText='€'+t.toFixed(2); }
+    function toggleCustomInput() { document.getElementById('customInputs').style.display = (document.getElementById('accType').value === 'custom') ? 'block' : 'none'; }
+    function resizeWall() { wallDiv.style.width = (document.getElementById('wallW').value * scale) + 'px'; wallDiv.style.height = (document.getElementById('wallH').value * scale) + 'px'; }
+    function toggleGrid() { wallDiv.classList.toggle('grid-on', document.getElementById('gridCheck').checked); }
+    function clearWall() { if(confirm("Alles löschen?")) { wallDiv.innerHTML = ''; updatePrice(); deselectItem(); } }
+    function updateCoordsDisplay() { if(selectedItem) coordsSpan.innerText = `Pos: ${Math.round(parseInt(selectedItem.style.left)/scale)}/${Math.round(parseInt(selectedItem.style.top)/scale)} cm`; }
+    function getContrastColor(hex){if(!hex||!hex.startsWith('#'))return'white';const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return((r*299)+(g*587)+(b*114))/1000>=128?'black':'white';}
+    function adjustColor(c,a){if(!c||!c.startsWith('#'))return'#000';return'#'+c.replace(/^#/, '').replace(/../g,c=>('0'+Math.min(255,Math.max(0,parseInt(c,16)+a)).toString(16)).substr(-2));}
+    function generateHoles(el,w,h){for(let r=0;r<27;r++){const xStart=(r%2===0)?4:2;for(let x=xStart;x<=w-2;x+=4){const d=document.createElement('div');d.className='sim-hole';d.style.left=(x*scale)+'px';d.style.top=(2+(r*2))*scale+'px';el.appendChild(d);}}}
+
+    // --- EDITOR ---
     let editTarget = null;
-    function openEdit(el) { editTarget=el; document.getElementById('editName').value=el.dataset.name; document.getElementById('editColor').value=el.dataset.color||"#ffffff"; document.getElementById('editModal').style.display='flex'; }
+    function openEdit(el) { 
+        if(!el) return;
+        editTarget=el; 
+        document.getElementById('editName').value=el.dataset.name; 
+        document.getElementById('editColor').value=el.dataset.color||"#0058a3"; 
+        document.getElementById('editModal').style.display='flex'; 
+    }
     function saveEdit() { 
         if(editTarget) {
             editTarget.dataset.name=document.getElementById('editName').value;
             if(editTarget.classList.contains('accessory')) {
                 const c = document.getElementById('editColor').value;
-                editTarget.style.backgroundColor=c; editTarget.dataset.color=c; 
+                editTarget.style.backgroundColor=c; editTarget.dataset.color=c; editTarget.style.borderColor=adjustColor(c,-40);
                 editTarget.style.color=getContrastColor(c);
                 editTarget.querySelector('span').innerText = editTarget.dataset.name;
             }
         }
-        closeEdit(); 
+        closeEdit();
     }
     function closeEdit(){ document.getElementById('editModal').style.display='none'; editTarget=null; }
 
-    // Export/Import (Standard Implementation)
+    // --- EXPORT/IMPORT ---
     function exportJSON() {
-        const items = [];
-        Array.from(wallDiv.children).forEach(el => {
-             items.push({ className: el.className, l: el.style.left, t: el.style.top, w: el.style.width, h: el.style.height, ds: Object.assign({}, el.dataset), bg: el.style.backgroundColor });
-        });
-        const blob = new Blob([JSON.stringify({wallW: document.getElementById('wallW').value, wallH: document.getElementById('wallH').value, items})], {type: "application/json"});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "skadis.json"; a.click();
+        const config = { wallW: document.getElementById('wallW').value, wallH: document.getElementById('wallH').value, items: [] };
+        Array.from(wallDiv.children).forEach(el => config.items.push({ className: el.className, l: el.style.left, t: el.style.top, w: el.style.width, h: el.style.height, ds: Object.assign({}, el.dataset), bg: el.style.backgroundColor }));
+        const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config)); a.download = "skadis.json"; a.click();
     }
     function importJSON(input) {
         if(!input.files[0]) return;
@@ -573,18 +538,15 @@
                 document.getElementById('wallW').value = c.wallW; document.getElementById('wallH').value = c.wallH; resizeWall();
                 wallDiv.innerHTML = '';
                 c.items.forEach(i => {
-                    const el = createItem({
-                        type: i.className.includes('board')?'board':'accessory',
-                        price: parseFloat(i.ds.price), w: parseInt(i.w)/scale, h: parseInt(i.h)/scale,
-                        name: i.ds.name, variant: i.ds.variant, color: i.bg, isCustom: (i.ds.type==='custom'), datasetType: i.ds.type
-                    }, false);
-                    el.style.left = i.l; el.style.top = i.t;
+                    spawnItemOnWall({ type: i.className.includes('board')?'board':'accessory', price: parseFloat(i.ds.price), w: parseInt(i.w)/scale, h: parseInt(i.h)/scale, name: i.ds.name, variant: i.ds.variant, color: i.bg, isCustom: (i.ds.type==='custom'), datasetType: i.ds.type });
+                    wallDiv.lastChild.style.left = i.l; wallDiv.lastChild.style.top = i.t;
                 });
-            } catch(e){alert("Error");}
+                updatePrice();
+            } catch (err) { alert("Error"); }
         };
-        r.readAsText(input.files[0]); input.value='';
+        r.readAsText(input.files[0]); input.value = '';
     }
-    function exportPrint() { window.print(); } // Simplified print
+    function exportPrint() { window.print(); }
 </script>
 </body>
 </html>
