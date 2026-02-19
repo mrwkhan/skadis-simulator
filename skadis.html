@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SKÅDIS Planer v10.1</title>
+    <title>SKÅDIS Planer v10.2</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -39,7 +39,7 @@
         .header-buttons { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; color: #333; opacity: 0.7; transition: opacity 0.2s; }
         .icon-btn:hover { opacity: 1; }
-        .lang-btn { font-size: 1.4rem; } /* Etwas größere Flaggen */
+        .lang-btn { font-size: 1.4rem; }
         
         .control-group { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
         label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #333; }
@@ -92,7 +92,8 @@
 
         /* --- UI OVERLAYS --- */
         .overlay-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
-        .ctrl-btn { width: 44px; height: 44px; background: white; border: 1px solid #ccc; border-radius: 8px; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; color: #333; }
+        .ctrl-btn { width: 44px; height: 44px; background: white; border: 1px solid #ccc; border-radius: 8px; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; color: #333; cursor: pointer; }
+        .ctrl-btn:hover { background: #f0f0f0; }
         
         .status-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); padding: 10px 15px; border-top: 1px solid #ccc; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; pointer-events: none; }
 
@@ -191,9 +192,11 @@
 <div class="workspace" id="workspace">
     <div id="zoomContainer"><div id="wall" class="grid-on"></div></div>
     <div class="overlay-controls">
-        <button class="ctrl-btn" onclick="changeZoom(0.1)">➕</button>
-        <button class="ctrl-btn" onclick="changeZoom(-0.1)">➖</button>
-        <button class="ctrl-btn" onclick="resetView()">⟲</button>
+        <button class="ctrl-btn" onclick="undo()" title="Rückgängig (Strg+Z)">↩️</button>
+        <button class="ctrl-btn" onclick="duplicateSelected()" title="Duplizieren (Strg+D)">📄</button>
+        <button class="ctrl-btn" onclick="changeZoom(0.1)" title="Zoom In">➕</button>
+        <button class="ctrl-btn" onclick="changeZoom(-0.1)" title="Zoom Out">➖</button>
+        <button class="ctrl-btn" onclick="resetView()" title="Zentrieren">⟲</button>
     </div>
     <div id="trash" title="🗑️">🗑️</div>
     <div class="status-bar">
@@ -208,7 +211,19 @@
         <label data-i18n="lbl_name">Name:</label>
         <input type="text" id="editName">
         <label data-i18n="lbl_color">Farbe:</label>
-        <input type="color" id="editColor" style="height:50px;">
+        <input type="color" id="editColor" style="height:50px; margin-bottom: 10px;">
+        
+        <div class="flex-row" style="margin-bottom: 15px;">
+            <div class="flex-col">
+                <label data-i18n="lbl_width" style="margin-bottom:2px;">Breite (cm):</label>
+                <input type="number" id="editW" step="1" min="1">
+            </div>
+            <div class="flex-col">
+                <label data-i18n="lbl_height" style="margin-bottom:2px;">Höhe (cm):</label>
+                <input type="number" id="editH" step="1" min="1">
+            </div>
+        </div>
+
         <div class="btn-group">
             <button class="btn-full btn-blue" onclick="saveEdit()" data-i18n="btn_save_only">Speichern</button>
             <button class="btn-full btn-dark" onclick="closeEdit()" data-i18n="btn_cancel">Abbrechen</button>
@@ -259,7 +274,6 @@
         }
     };
 
-    // Lade Sprache aus dem Speicher ODER ermittle sie über den Browser
     let userLang = localStorage.getItem('skadis_lang') || (navigator.language.startsWith('de') ? 'de' : 'en');
 
     function setLanguage(lang) {
@@ -268,7 +282,6 @@
         applyLanguage();
     }
 
-    // Editable Configuration
     let appConfig = {
         boards: [
             { id: "b1", w: 36, h: 56, price: 9.99, name: "36x56 cm" },
@@ -303,7 +316,6 @@
     }
 
     function buildDropdowns() {
-        // Build Boards
         const boardSel = document.getElementById('boardSel');
         boardSel.innerHTML = "";
         appConfig.boards.forEach(b => {
@@ -313,7 +325,6 @@
             boardSel.appendChild(opt);
         });
 
-        // Build Accessories
         const accSel = document.getElementById('accType');
         accSel.innerHTML = "";
         let currentGrp = ""; let optGroup = null;
@@ -333,7 +344,6 @@
             optGroup.appendChild(opt);
         });
 
-        // Custom Option
         let custGrp = document.createElement('optgroup');
         custGrp.label = i18n[userLang].grp_custom;
         let custOpt = document.createElement('option');
@@ -356,21 +366,64 @@
     let panX = 0, panY = 0;
     let isPanning = false, startPanX = 0, startPanY = 0, lastPinchDist = null, initialZoom = 1;
     let selectedItem = null, isDraggingItem = false, dragItem = null, dragOffsetX = 0, dragOffsetY = 0;
+    
+    // Undo-System
+    let historyStack = [];
+    let pendingState = null;
+    let dragStartX = null, dragStartY = null;
 
-    // Initialization
+    function saveState() {
+        historyStack.push(wallDiv.innerHTML);
+        if(historyStack.length > 20) historyStack.shift();
+    }
+
+    function undo() {
+        if(historyStack.length === 0) return;
+        wallDiv.innerHTML = historyStack.pop();
+        
+        // Event-Listener nach Wiederherstellung neu binden
+        Array.from(wallDiv.children).forEach(el => {
+            if(el.classList.contains('item')) {
+                el.addEventListener('dblclick', () => openEdit(el));
+            }
+        });
+        
+        deselectItem();
+        stopDragItem();
+        updatePrice();
+    }
+
+    function duplicateSelected() {
+        if (!selectedItem) return;
+        saveState();
+        
+        const clone = selectedItem.cloneNode(true);
+        let curLeft = parseFloat(clone.style.left) || 0;
+        let curTop = parseFloat(clone.style.top) || 0;
+        
+        // Leicht versetzt einfügen
+        clone.style.left = (curLeft + 15) + 'px';
+        clone.style.top = (curTop + 15) + 'px';
+        
+        clone.classList.remove('selected');
+        clone.addEventListener('dblclick', () => openEdit(clone));
+        
+        wallDiv.appendChild(clone);
+        selectItem(clone);
+        updatePrice();
+    }
+
     applyLanguage();
     resizeWall();
     centerWall();
 
     function toggleSidebar() { sidebar.classList.toggle('open'); }
 
-    // Zoom & Pan
     function updateTransform() { zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`; }
     function changeZoom(delta) { currentZoom = Math.min(Math.max(currentZoom + delta, 0.2), 3.0); updateTransform(); }
     function resetView() { centerWall(); }
     function centerWall() { panX = 0; panY = 0; currentZoom = window.innerWidth < 600 ? 0.5 : 0.8; updateTransform(); }
 
-    // Inputs
     workspace.addEventListener('touchstart', handleTouchStart, {passive: false});
     workspace.addEventListener('touchmove', handleTouchMove, {passive: false});
     workspace.addEventListener('touchend', handleTouchEnd);
@@ -414,7 +467,13 @@
         trash.classList.remove('hover'); isPanning = false; workspace.style.cursor = 'default'; stopDragItem(); 
     }
 
-    function startDragItem(item, cx, cy) { isDraggingItem = true; dragItem = item; dragItem.style.opacity = '0.6'; const rect = dragItem.getBoundingClientRect(); dragOffsetX = cx - rect.left; dragOffsetY = cy - rect.top; }
+    function startDragItem(item, cx, cy) { 
+        pendingState = wallDiv.innerHTML; 
+        dragStartX = item.style.left; dragStartY = item.style.top;
+        isDraggingItem = true; dragItem = item; dragItem.style.opacity = '0.6'; 
+        const rect = dragItem.getBoundingClientRect(); dragOffsetX = cx - rect.left; dragOffsetY = cy - rect.top; 
+    }
+    
     function moveDragItem(cx, cy) {
         if (!dragItem) return;
         const wallRect = wallDiv.getBoundingClientRect();
@@ -422,18 +481,50 @@
         x = Math.round(x / 5) * 5; y = Math.round(y / 5) * 5;
         dragItem.style.left = x + 'px'; dragItem.style.top = y + 'px'; updateCoordsDisplay();
     }
-    function stopDragItem() { if (dragItem) dragItem.style.opacity = '1'; isDraggingItem = false; dragItem = null; }
+    
+    function stopDragItem() { 
+        if (dragItem) {
+            dragItem.style.opacity = '1'; 
+            if (pendingState && (dragStartX !== dragItem.style.left || dragStartY !== dragItem.style.top)) {
+                historyStack.push(pendingState);
+                if(historyStack.length > 20) historyStack.shift();
+            }
+        }
+        isDraggingItem = false; dragItem = null; pendingState = null;
+    }
+    
     function checkTrashHover(x, y) { const tRect = trash.getBoundingClientRect(); if (x >= tRect.left && x <= tRect.right && y >= tRect.top && y <= tRect.bottom) trash.classList.add('hover'); else trash.classList.remove('hover'); }
 
     function selectItem(el) { if (selectedItem) selectedItem.classList.remove('selected'); selectedItem = el; selectedItem.classList.add('selected'); updateCoordsDisplay(); }
     function deselectItem() { if (selectedItem) selectedItem.classList.remove('selected'); selectedItem = null; coordsSpan.innerText = "x: -, y: -"; }
-    function deleteSelected() { if (selectedItem) { selectedItem.remove(); deselectItem(); updatePrice(); trash.classList.remove('hover'); } }
+    
+    function deleteSelected() { 
+        if (selectedItem) { 
+            saveState();
+            selectedItem.remove(); 
+            deselectItem(); 
+            updatePrice(); 
+            trash.classList.remove('hover'); 
+        } 
+    }
 
     document.addEventListener('keydown', (e) => {
+        // Tastenkürzel für Undo und Duplizieren
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+            if (e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
+        }
+
         if (e.target.tagName === 'INPUT') return;
         if (!selectedItem) return;
+        
         const step = e.shiftKey ? 20 : 5; 
         let l = parseInt(selectedItem.style.left); let t = parseInt(selectedItem.style.top); let moved = false;
+        
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            if (!e.repeat) saveState();
+        }
+
         switch(e.key) {
             case 'Delete': case 'Backspace': deleteSelected(); return;
             case 'ArrowLeft': selectedItem.style.left = (l - step) + 'px'; moved = true; break;
@@ -445,6 +536,7 @@
     });
 
     function spawnItemOnWall(data) {
+        saveState();
         const el = document.createElement('div'); el.className = 'item ' + data.type;
         el.style.width = (data.w * scale) + 'px'; el.style.height = (data.h * scale) + 'px';
         if (data.type === 'board') {
@@ -488,7 +580,7 @@
     function toggleCustomInput() { document.getElementById('customInputs').style.display = (document.getElementById('accType').value === 'custom') ? 'block' : 'none'; }
     function resizeWall() { wallDiv.style.width = (document.getElementById('wallW').value * scale) + 'px'; wallDiv.style.height = (document.getElementById('wallH').value * scale) + 'px'; }
     function toggleGrid() { wallDiv.classList.toggle('grid-on', document.getElementById('gridCheck').checked); }
-    function clearWall() { if(confirm(i18n[userLang].alert_reset)) { wallDiv.innerHTML = ''; updatePrice(); deselectItem(); } }
+    function clearWall() { if(confirm(i18n[userLang].alert_reset)) { saveState(); wallDiv.innerHTML = ''; updatePrice(); deselectItem(); } }
     function updateCoordsDisplay() { if(selectedItem) coordsSpan.innerText = `Pos: ${Math.round(parseInt(selectedItem.style.left)/scale)}/${Math.round(parseInt(selectedItem.style.top)/scale)} cm`; }
     function getContrastColor(hex){if(!hex||!hex.startsWith('#'))return'white';const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return((r*299)+(g*587)+(b*114))/1000>=128?'black':'white';}
     function adjustColor(c,a){if(!c||!c.startsWith('#'))return'#000';return'#'+c.replace(/^#/, '').replace(/../g,c=>('0'+Math.min(255,Math.max(0,parseInt(c,16)+a)).toString(16)).substr(-2));}
@@ -514,19 +606,44 @@
         if(!el) return; editTarget = el; 
         document.getElementById('editName').value = editTarget.dataset.name; 
         document.getElementById('editColor').value = editTarget.dataset.color || "#0058a3"; 
+        
+        // Lade aktuelle Maße in die Inputs
+        document.getElementById('editW').value = parseFloat(editTarget.style.width) / scale;
+        document.getElementById('editH').value = parseFloat(editTarget.style.height) / scale;
+
         document.getElementById('editModal').style.display = 'flex'; 
     }
+    
     function saveEdit() { 
         if(editTarget) {
+            saveState(); // Vor Änderung speichern für Undo
+            
             editTarget.dataset.name = document.getElementById('editName').value;
-            if(editTarget.classList.contains('accessory')) {
+            
+            // Neue Maße anwenden
+            const newW = parseFloat(document.getElementById('editW').value) || 10;
+            const newH = parseFloat(document.getElementById('editH').value) || 10;
+            
+            editTarget.style.width = (newW * scale) + 'px';
+            editTarget.style.height = (newH * scale) + 'px';
+
+            if(editTarget.classList.contains('board')) {
+                // Bei Boards Löcher neu generieren
+                editTarget.querySelectorAll('.sim-hole, .mount-point').forEach(e => e.remove());
+                generateHoles(editTarget, newW, newH);
+            } else if(editTarget.classList.contains('accessory')) {
                 const c = document.getElementById('editColor').value;
                 editTarget.style.backgroundColor = c; editTarget.dataset.color = c; editTarget.style.borderColor = adjustColor(c,-40);
-                editTarget.style.color = getContrastColor(c); editTarget.querySelector('span').innerText = editTarget.dataset.name;
+                editTarget.style.color = getContrastColor(c); 
+                editTarget.querySelector('span').innerText = editTarget.dataset.name;
+                // Schriftgröße an neue Box anpassen
+                editTarget.style.fontSize = Math.max(10, Math.min(16, Math.min(newW, newH)*scale/4))+'px';
             }
         }
         closeEdit();
+        updateCoordsDisplay();
     }
+    
     function closeEdit(){ document.getElementById('editModal').style.display='none'; editTarget=null; }
 
     // --- GLOBAL SETTINGS (Maße & Preise) ---
@@ -534,7 +651,6 @@
         const list = document.getElementById('settingsList');
         list.innerHTML = "";
         
-        // Render Accessories
         appConfig.accessories.forEach(a => {
             let row = document.createElement('div');
             row.className = "settings-row";
@@ -555,7 +671,7 @@
             a.w = parseFloat(document.getElementById(`set_w_${a.id}`).value) || 1;
             a.h = parseFloat(document.getElementById(`set_h_${a.id}`).value) || 1;
         });
-        buildDropdowns(); // Dropdowns aktualisieren
+        buildDropdowns(); 
         closeSettings();
     }
 
@@ -572,6 +688,7 @@
         const r = new FileReader();
         r.onload = function(e) {
             try {
+                saveState();
                 const c = JSON.parse(e.target.result);
                 document.getElementById('wallW').value = c.wallW; document.getElementById('wallH').value = c.wallH; resizeWall();
                 wallDiv.innerHTML = '';
