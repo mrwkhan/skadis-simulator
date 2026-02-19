@@ -1,14 +1,19 @@
 # IKEA SKÅDIS Planer & 3D-Druck Konfigurator
 
+🇩🇪 [Deutsche Version](#-deutsche-version) | 🇬🇧 [English Version](#-english-version)
+
 Ein präzises, webbasiertes Tool zur Planung von IKEA SKÅDIS Lochwänden. Speziell entwickelt für **3D-Druck-Enthusiasten** und Maker, die exakte Maße, Sperrzonen für Schrauben und benutzerdefinierte Teile benötigen.
 
 ### 🔗 [Hier geht's direkt zum Tool](https://mrwkhan.github.io/skadis-simulator/skadis.html)
 
-![Status](https://img.shields.io/badge/Status-Stable-green) ![Version](https://img.shields.io/badge/Version-3.3-blue) ![Tech](https://img.shields.io/badge/Tech-HTML%20%7C%20JS%20%7C%20SVG-orange)
+![Status](https://img.shields.io/badge/Status-Stable-green) ![Version](https://img.shields.io/badge/Version-10.1-blue) ![Tech](https://img.shields.io/badge/Tech-Vanilla%20JS%20%7C%20CSS3%20%7C%20HTML5-orange)
 
 ---
 
-## 🌟 Warum dieser Planer?
+<a name="-deutsche-version"></a>
+## 🇩🇪 Deutsche Version
+
+### 🌟 Warum dieser Planer?
 
 Im Gegensatz zu vereinfachten Tools simuliert dieser Planer die **physikalische Realität** der SKÅDIS-Platten mathematisch exakt.
 
@@ -16,76 +21,69 @@ Im Gegensatz zu vereinfachten Tools simuliert dieser Planer die **physikalische 
 * **Sperrzonen:** Zeigt automatisch rote Warnmarkierungen (🔴) an den Positionen der Befestigungsschrauben an, damit du dort kein Zubehör planst.
 * **3D-Druck Friendly:** Erlaube das Hinzufügen von "Custom Parts" mit eigenen Maßen, Farben und Preisen.
 
-## ✨ Features
+### ✨ Neue Features in v10.1
+* **Multilingual:** Vollständige Unterstützung für Deutsch 🇩🇪 und Englisch 🇬🇧.
+* **Globale Einstellungen (⚙️):** Passe die Standardmaße und Preise aller Zubehörteile individuell an deine Bedürfnisse an.
+* **Touch-Support:** Volle Unterstützung für Smartphones und Tablets (Pinch-to-Zoom, Drag & Drop per Touch).
+* **Kostenkontrolle:** Echtzeit-Berechnung der Gesamtkosten für dein Projekt.
 
-### 📐 Präzision & Simulation
-* **Realistisches Lochraster:** Exakte Simulation des Rasterversatzes.
-* **Montagepunkte:** Visuelle Indikatoren für die Schraubköpfe der Wandmontage.
-* **Hilfsraster:** Einblendbares 2cm-Gitter zur Orientierung.
+### 📐 Präzision & Gestaltung
+* **Original IKEA-Maße:** Alle Standardgrößen (36x56, 56x56, 76x56) und Farbvarianten (Weiß, Holz, Schwarz) verfügbar.
+* **Vollständige Bibliothek:** Haken, Halter, Behälter, Ablagen und Gummibänder.
+* **Speichern & Export:** Projekt als `.json` speichern, laden oder als Bauplan inkl. Einkaufsliste direkt ausdrucken / als PDF speichern.
 
-### 🎨 Gestaltung & Zubehör
-* **Original IKEA-Maße:** Alle Standardgrößen (36x56, 56x56, 76x56) verfügbar.
-* **Farbvarianten:** Wählbar zwischen Weiß, Holz (Nachbildung) und Schwarz (mit angepasstem Kontrast).
-* **Vollständige Bibliothek:** Alle gängigen IKEA-Haken, Halter, Behälter, Ablagen und Gummibänder.
-* **Manuelles Zubehör:** Erstelle eigene Platzhalter für 3D-Druck-Teile (Definiere Breite, Höhe, Farbe und Preis).
-
-### 🖱️ Usability (UX)
-* **Zoom & Pan:** Stufenloser Zoom und Verschieben der Arbeitsfläche.
-* **Feinjustierung:** Pixelgenaues Positionieren mit den Pfeiltasten.
-* **Editieren:** Doppelklick auf ein Teil öffnet das Bearbeiten-Fenster.
-
-### 💾 Speichern & Export
-* **Projekt speichern:** Exportiere dein Layout als `.json` Datei.
-* **Druck-Export:** Generiert eine **hochwertige SVG-Vektorgrafik** für den Ausdruck oder als Bauplan, inklusive einer detaillierten Einkaufsliste und Kostenschätzung.
-
----
-
-## 🚀 Starten
-
-Das Tool läuft direkt im Browser. Es ist keine Installation notwendig.
-
-1.  Öffne den **[Link zum Planer](https://mrwkhan.github.io/skadis-simulator/skadis.html)**.
-2.  Leg los!
-
-*Optional: Da es sich um eine Single-File-Application handelt, kannst du die HTML-Datei auch speichern und komplett offline nutzen.*
+### 📖 Bedienungsanleitung
+1. **Wand einrichten:** Gib die Maße deiner verfügbaren Wandfläche ein.
+2. **Platte platzieren:** Wähle Größe und Farbe und klicke auf `Platte auf Wand werfen`.
+3. **Zubehör hinzufügen:** Wähle IKEA-Teile oder erstelle manuelles Zubehör (Definiere B/H, Farbe und Preis).
+4. **Steuerung:** * Bewegen per *Drag & Drop*.
+   * Feinjustierung mit den **Pfeiltasten** (Shift + Pfeil = 4cm Schritte).
+   * **Doppelklick** auf ein Teil öffnet das Bearbeiten-Fenster.
+   * Zum Löschen das Teil auf den Mülleimer 🗑️ ziehen.
+   * **Zoom & Pan:** Mausrad nutzen oder auf den Hintergrund klicken und ziehen.
 
 ---
 
-## 📖 Bedienungsanleitung
+<a name="-english-version"></a>
+## 🇬🇧 English Version
 
-### 1. Wand einrichten
-Gib oben links die Maße deiner verfügbaren Wandfläche in cm ein (z.B. 100 x 150). Der Arbeitsbereich passt sich automatisch an.
+### 🌟 Why this planner?
 
-### 2. Platten platzieren
-Wähle unter **"2. Basis"** die Größe und Farbe der Lochplatte und klicke auf `Platte erzeugen`. Ziehe die Platte an die gewünschte Position auf der Wand.
+Unlike simplified tools, this planner simulates the **physical reality** of SKÅDIS boards with mathematical precision.
 
-### 3. Zubehör hinzufügen
-* **IKEA Teile:** Wähle aus der Liste unter **"3. Zubehör"** das gewünschte Teil und klicke auf `Hinzufügen`.
-* **Custom Parts:** Wähle im Dropdown `-- Manuelles Teil --`. Gib Namen, Maße (B/H in cm), Farbe und Preis ein und klicke auf `Teil erzeugen`.
+* **Correct Geometry:** Accounts for the staggered hole pattern and exact margins, ensuring your digital plan matches reality.
+* **Keep-out Zones:** Automatically displays red warning markers (🔴) at the positions of the mounting screws to prevent hardware collisions.
+* **3D-Print Friendly:** Add custom parts with your own dimensions, colors, and material costs.
 
-### 4. Teile bearbeiten & bewegen
-* **Verschieben:** Drag & Drop mit der Maus.
-* **Feinjustierung:** Teil anklicken (roter Rahmen) und mit den **Pfeiltasten** bewegen (Shift + Pfeil = 4cm Schritte).
-* **Editieren:** **Doppelklick** auf ein Zubehörteil öffnet ein Fenster, um Namen oder Farbe nachträglich zu ändern.
-* **Löschen:** Ziehe das Teil auf den Mülleimer 🗑️ oder drücke die `Entf`-Taste.
+### ✨ New Features in v10.1
+* **Multilingual:** Full support for English 🇬🇧 and German 🇩🇪.
+* **Global Settings (⚙️):** Customize the default dimensions and prices of all accessories to fit your specific 3D-printing or local store costs.
+* **Touch Support:** Fully optimized for smartphones and tablets (Pinch-to-zoom, touch drag & drop).
+* **Cost Tracking:** Real-time calculation of your total project cost.
 
-### 5. Ansicht steuern
-* **Zoom:** Nutze das Mausrad oder die Lupe-Icons.
-* **Verschieben (Pan):** Klicke und halte auf den *leeren Hintergrund* und ziehe die Maus.
-* **Reset:** Klicke auf den `⟲` Button, um die Ansicht zurückzusetzen.
+### 📐 Precision & Design
+* **Original IKEA Sizes:** All standard sizes (36x56, 56x56, 76x56) and colors (White, Wood, Black) are available.
+* **Extensive Library:** Hooks, holders, containers, shelves, and more.
+* **Save & Export:** Save your project as a `.json` file, load previous states, or print a blueprint/PDF including a complete shopping list.
 
-### 6. Exportieren
-* **Speichern:** Klicke auf `💾 Speichern`, um den aktuellen Stand als JSON zu sichern.
-* **Drucken:** Klicke auf `🖨️ Drucken / PDF`. Es öffnet sich ein neues Fenster mit der Bauzeichnung und der Einkaufsliste (nutze "Als PDF speichern" im Browser).
+### 📖 How to use
+1. **Setup Wall:** Enter the dimensions of your available wall space.
+2. **Place Board:** Choose size and color, then click `Throw board on wall`.
+3. **Add Accessories:** Select IKEA parts or create a custom part (define W/H, color, and price).
+4. **Controls:** * Move items via *Drag & Drop*.
+   * Fine-tune positioning using **Arrow Keys** (Shift + Arrow = 4cm steps).
+   * **Double-click** an item to edit its name or color.
+   * Drag an item to the trash bin 🗑️ to delete it.
+   * **Zoom & Pan:** Use the mouse wheel, or click and drag the empty background.
 
 ---
 
-## 🛠️ Technische Details
+## 🛠️ Technical Details / Technik
 
-* **Technologie:** Vanilla HTML5, CSS3, JavaScript (ES6).
-* **Keine Abhängigkeiten:** Keine externen Libraries, kein Framework.
-* **Rendering:** DOM-Elemente für Interaktion, SVG on-the-fly für Export.
+* **Technology:** Vanilla HTML5, CSS3, JavaScript (ES6).
+* **Zero Dependencies:** No external libraries, no frameworks. Keep it lightweight and fast!
+* **Offline Ready:** Because it's a Single-File-Application, you can just save the `.html` file and use it completely offline.
 
-## 📄 Lizenz
+## 📄 License
 
-Dieses Projekt steht zur freien Verfügung. Feel free to fork and improve! Use at own risk!
+This project is open-source. Feel free to fork and improve! Use at your own risk!
