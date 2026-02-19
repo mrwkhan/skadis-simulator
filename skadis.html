@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SKÅDIS Planer v10</title>
+    <title>SKÅDIS Planer v10.1</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -36,14 +36,16 @@
 
         h2 { color: #0058a3; margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #ffdb00; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         
-        .header-buttons { display: flex; gap: 10px; }
-        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; color: #333; }
+        .header-buttons { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; color: #333; opacity: 0.7; transition: opacity 0.2s; }
+        .icon-btn:hover { opacity: 1; }
+        .lang-btn { font-size: 1.4rem; } /* Etwas größere Flaggen */
         
         .control-group { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
         label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #333; }
         
         input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 12px; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 6px; margin-bottom: 8px; font-size: 0.95rem; }
+        button.btn-full { width: 100%; padding: 12px; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 6px; margin-bottom: 8px; font-size: 0.95rem; }
         
         .btn-blue { background: #0058a3; } .btn-blue:active { background: #004f93; transform: scale(0.98); }
         .btn-dark { background: #333; } .btn-dark:active { background: #555; transform: scale(0.98); }
@@ -114,19 +116,21 @@
     <h2>
         <span data-i18n="title">SKÅDIS Planer</span>
         <div class="header-buttons">
+            <button onclick="setLanguage('de')" class="icon-btn lang-btn" title="Deutsch">🇩🇪</button>
+            <button onclick="setLanguage('en')" class="icon-btn lang-btn" title="English">🇬🇧</button>
             <button onclick="openSettings()" class="icon-btn" title="Settings">⚙️</button>
-            <button onclick="toggleSidebar()" class="icon-btn" class="close-sidebar-btn">×</button>
+            <button onclick="toggleSidebar()" class="icon-btn close-sidebar-btn">×</button>
         </div>
     </h2>
     
     <div class="control-group">
         <label data-i18n="lbl_project">Projekt</label>
         <div class="btn-group">
-            <button class="btn-orange" onclick="exportJSON()">💾 <span data-i18n="btn_save">Speichern</span></button>
-            <button class="btn-orange" onclick="document.getElementById('fileInput').click()">📂 <span data-i18n="btn_load">Laden</span></button>
+            <button class="btn-full btn-orange" onclick="exportJSON()">💾 <span data-i18n="btn_save">Speichern</span></button>
+            <button class="btn-full btn-orange" onclick="document.getElementById('fileInput').click()">📂 <span data-i18n="btn_load">Laden</span></button>
         </div>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(this)" accept=".json">
-        <button class="btn-green" onclick="exportPrint()">🖨️ <span data-i18n="btn_print">PDF / Drucken</span></button>
+        <button class="btn-full btn-green" onclick="exportPrint()">🖨️ <span data-i18n="btn_print">PDF / Drucken</span></button>
         <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
             <input type="checkbox" id="gridCheck" checked onchange="toggleGrid()" style="width:auto; margin:0; height:20px; width:20px;"> 
             <label for="gridCheck" style="margin:0;" data-i18n="lbl_grid">2cm Raster</label>
@@ -153,7 +157,7 @@
                 <option value="black" data-i18n="color_black">Schwarz</option>
             </select>
         </div>
-        <button class="btn-blue" onclick="spawnBoard()">➕ <span data-i18n="btn_add_board">Platte auf Wand werfen</span></button>
+        <button class="btn-full btn-blue" onclick="spawnBoard()">➕ <span data-i18n="btn_add_board">Platte auf Wand werfen</span></button>
     </div>
 
     <div class="control-group">
@@ -173,11 +177,11 @@
             </div>
         </div>
 
-        <button class="btn-dark" onclick="spawnAccessory()">➕ <span data-i18n="btn_add_acc">Teil auf Wand werfen</span></button>
+        <button class="btn-full btn-dark" onclick="spawnAccessory()">➕ <span data-i18n="btn_add_acc">Teil auf Wand werfen</span></button>
     </div>
 
     <div style="margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
-        <button class="btn-dark" onclick="clearWall()" style="background:#555; font-size:0.8rem;">⚠️ <span data-i18n="btn_reset">Alles löschen / Reset</span></button>
+        <button class="btn-full btn-dark" onclick="clearWall()" style="background:#555; font-size:0.8rem;">⚠️ <span data-i18n="btn_reset">Alles löschen / Reset</span></button>
     </div>
 
     <div class="price-tag" id="totalPrice">€0.00</div>
@@ -206,8 +210,8 @@
         <label data-i18n="lbl_color">Farbe:</label>
         <input type="color" id="editColor" style="height:50px;">
         <div class="btn-group">
-            <button class="btn-blue" onclick="saveEdit()" data-i18n="btn_save_only">Speichern</button>
-            <button class="btn-dark" onclick="closeEdit()" data-i18n="btn_cancel">Abbrechen</button>
+            <button class="btn-full btn-blue" onclick="saveEdit()" data-i18n="btn_save_only">Speichern</button>
+            <button class="btn-full btn-dark" onclick="closeEdit()" data-i18n="btn_cancel">Abbrechen</button>
         </div>
     </div>
 </div>
@@ -222,8 +226,8 @@
         <div id="settingsList"></div>
         
         <div class="btn-group" style="margin-top: 15px;">
-            <button class="btn-blue" onclick="saveSettings()" data-i18n="btn_save_only">Speichern</button>
-            <button class="btn-dark" onclick="closeSettings()" data-i18n="btn_cancel">Abbrechen</button>
+            <button class="btn-full btn-blue" onclick="saveSettings()" data-i18n="btn_save_only">Speichern</button>
+            <button class="btn-full btn-dark" onclick="closeSettings()" data-i18n="btn_cancel">Abbrechen</button>
         </div>
     </div>
 </div>
@@ -232,7 +236,7 @@
     // --- APP DATA & I18N ---
     const i18n = {
         de: {
-            title: "SKÅDIS Planer v10", lbl_project: "Projekt", btn_save: "Speichern", btn_load: "Laden", btn_print: "PDF / Drucken",
+            title: "SKÅDIS Planer", lbl_project: "Projekt", btn_save: "Speichern", btn_load: "Laden", btn_print: "PDF / Drucken",
             lbl_grid: "2cm Raster", lbl_wall: "1. Wandgröße (cm)", lbl_width: "Breite", lbl_height: "Höhe", 
             lbl_board: "2. Platte hinzufügen", lbl_board_tip: "Tippen um auf die Wand zu werfen", 
             color_white: "Weiß", color_wood: "Holz", color_black: "Schwarz", btn_add_board: "Platte auf Wand werfen",
@@ -243,7 +247,7 @@
             opt_custom: "-- Manuelles Teil (3D Druck) --", alert_reset: "Alles löschen?"
         },
         en: {
-            title: "SKÅDIS Planner v10", lbl_project: "Project", btn_save: "Save", btn_load: "Load", btn_print: "PDF / Print",
+            title: "SKÅDIS Planner", lbl_project: "Project", btn_save: "Save", btn_load: "Load", btn_print: "PDF / Print",
             lbl_grid: "2cm Grid", lbl_wall: "1. Wall Size (cm)", lbl_width: "Width", lbl_height: "Height", 
             lbl_board: "2. Add Pegboard", lbl_board_tip: "Tap to place on wall", 
             color_white: "White", color_wood: "Wood", color_black: "Black", btn_add_board: "Throw board on wall",
@@ -255,7 +259,14 @@
         }
     };
 
-    let userLang = navigator.language.startsWith('de') ? 'de' : 'en';
+    // Lade Sprache aus dem Speicher ODER ermittle sie über den Browser
+    let userLang = localStorage.getItem('skadis_lang') || (navigator.language.startsWith('de') ? 'de' : 'en');
+
+    function setLanguage(lang) {
+        userLang = lang;
+        localStorage.setItem('skadis_lang', lang);
+        applyLanguage();
+    }
 
     // Editable Configuration
     let appConfig = {
