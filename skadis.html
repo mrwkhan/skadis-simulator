@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SKÅDIS Planer v10.2</title>
+    <title>SKÅDIS Planer v10.3</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -75,7 +75,7 @@
             user-select: none; -webkit-user-select: none; 
             touch-action: none; cursor: grab;
         }
-        .item.selected { border: 2px solid #ff0000 !important; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); z-index: 9999 !important; }
+        .item.selected { border: 2px solid #ff0000 !important; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
 
         .item.board { z-index: 10; border: 1px solid #999; border-radius: 12px; overflow: hidden; }
         .board-white { background-color: #ffffff; }
@@ -94,7 +94,20 @@
         .overlay-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
         .ctrl-btn { width: 44px; height: 44px; background: white; border: 1px solid #ccc; border-radius: 8px; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; color: #333; cursor: pointer; }
         .ctrl-btn:hover { background: #f0f0f0; }
+        .ctrl-btn.active { background: #0058a3; color: white; border-color: #003a6c; }
         
+        /* --- ACTION TOOLBAR (Align, Distribute, Layers) --- */
+        .action-toolbar {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none; padding: 5px; gap: 10px; z-index: 200;
+        }
+        .action-toolbar.visible { display: flex; }
+        .action-group { display: flex; gap: 2px; border-right: 1px solid #ddd; padding-right: 10px; align-items: center; }
+        .action-group:last-child { border-right: none; padding-right: 0; }
+        .tb-btn { background: none; border: 1px solid transparent; cursor: pointer; padding: 5px 8px; border-radius: 4px; font-size: 1.2rem; color: #333; }
+        .tb-btn:hover { background: #f0f0f0; border: 1px solid #ccc; }
+
         .status-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); padding: 10px 15px; border-top: 1px solid #ccc; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; pointer-events: none; }
 
         #trash { position: fixed; bottom: 60px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #cc0000; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 150; transition: transform 0.2s, background 0.2s; }
@@ -134,7 +147,7 @@
         <button class="btn-full btn-green" onclick="exportPrint()">🖨️ <span data-i18n="btn_print">PDF / Drucken</span></button>
         <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
             <input type="checkbox" id="gridCheck" checked onchange="toggleGrid()" style="width:auto; margin:0; height:20px; width:20px;"> 
-            <label for="gridCheck" style="margin:0;" data-i18n="lbl_grid">2cm Raster</label>
+            <label for="gridCheck" style="margin:0;" data-i18n="lbl_grid">2cm Raster (Snap)</label>
         </div>
     </div>
 
@@ -191,7 +204,30 @@
 
 <div class="workspace" id="workspace">
     <div id="zoomContainer"><div id="wall" class="grid-on"></div></div>
-    <div class="overlay-controls">
+    
+    <div class="action-toolbar" id="actionToolbar" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+        <div class="action-group" id="layerGroup" title="Ebenen (Layers)">
+            <button class="tb-btn" onclick="setLayer('front')" title="Ganz nach vorne">⏫</button>
+            <button class="tb-btn" onclick="setLayer('forward')" title="Eine Ebene vor">🔼</button>
+            <button class="tb-btn" onclick="setLayer('backward')" title="Eine Ebene zurück">🔽</button>
+            <button class="tb-btn" onclick="setLayer('back')" title="Ganz nach hinten">⏬</button>
+        </div>
+        <div class="action-group" id="alignGroup" title="Ausrichten">
+            <button class="tb-btn" onclick="alignElements('left')" title="Links bündig">⬅️</button>
+            <button class="tb-btn" onclick="alignElements('centerX')" title="Mittig (Horizontal)">↔️</button>
+            <button class="tb-btn" onclick="alignElements('right')" title="Rechts bündig">➡️</button>
+            <button class="tb-btn" onclick="alignElements('top')" title="Oben bündig">⬆️</button>
+            <button class="tb-btn" onclick="alignElements('centerY')" title="Mittig (Vertikal)">↕️</button>
+            <button class="tb-btn" onclick="alignElements('bottom')" title="Unten bündig">⬇️</button>
+        </div>
+        <div class="action-group" id="distGroup" title="Verteilen">
+            <button class="tb-btn" onclick="distributeElements('x')" title="Horizontal verteilen">⏸️</button>
+            <button class="tb-btn" onclick="distributeElements('y')" title="Vertikal verteilen">🟰</button>
+        </div>
+    </div>
+
+    <div class="overlay-controls" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+        <button class="ctrl-btn" id="multiToggle" onclick="toggleMultiMode()" title="Mehrfachauswahl Modus">🔲</button>
         <button class="ctrl-btn" onclick="undo()" title="Rückgängig (Strg+Z)">↩️</button>
         <button class="ctrl-btn" onclick="duplicateSelected()" title="Duplizieren (Strg+D)">📄</button>
         <button class="ctrl-btn" onclick="changeZoom(0.1)" title="Zoom In">➕</button>
@@ -200,7 +236,7 @@
     </div>
     <div id="trash" title="🗑️">🗑️</div>
     <div class="status-bar">
-        <div id="statusText" data-i18n="status_text">Doppeltipp = Edit | Ziehen auf 🗑️ = Löschen</div>
+        <div id="statusText" data-i18n="status_text">Doppeltipp = Edit | Shift+Klick = Multi-Select</div>
         <div><span id="coords">x: -, y: -</span></div>
     </div>
 </div>
@@ -252,22 +288,22 @@
     const i18n = {
         de: {
             title: "SKÅDIS Planer", lbl_project: "Projekt", btn_save: "Speichern", btn_load: "Laden", btn_print: "PDF / Drucken",
-            lbl_grid: "2cm Raster", lbl_wall: "1. Wandgröße (cm)", lbl_width: "Breite", lbl_height: "Höhe", 
+            lbl_grid: "2cm Raster (Snap)", lbl_wall: "1. Wandgröße (cm)", lbl_width: "Breite", lbl_height: "Höhe", 
             lbl_board: "2. Platte hinzufügen", lbl_board_tip: "Tippen um auf die Wand zu werfen", 
             color_white: "Weiß", color_wood: "Holz", color_black: "Schwarz", btn_add_board: "Platte auf Wand werfen",
             lbl_acc: "3. Zubehör hinzufügen", btn_add_acc: "Teil auf Wand werfen", btn_reset: "Alles löschen / Reset",
-            status_text: "Doppeltipp = Edit | Ziehen auf 🗑️ = Löschen", modal_edit: "Bearbeiten", lbl_name: "Name:", lbl_color: "Farbe:",
+            status_text: "Doppeltipp = Edit | Shift+Klick = Multi-Select | 🗑️ = Löschen", modal_edit: "Bearbeiten", lbl_name: "Name:", lbl_color: "Farbe:",
             btn_save_only: "Speichern", btn_cancel: "Abbrechen", modal_settings: "Einstellungen (Preise & Maße)",
             grp_container: "Behälter & Aufbewahrung", grp_hooks: "Haken", grp_special: "Spezialhalter", grp_custom: "Montage & Custom",
             opt_custom: "-- Manuelles Teil (3D Druck) --", alert_reset: "Alles löschen?"
         },
         en: {
             title: "SKÅDIS Planner", lbl_project: "Project", btn_save: "Save", btn_load: "Load", btn_print: "PDF / Print",
-            lbl_grid: "2cm Grid", lbl_wall: "1. Wall Size (cm)", lbl_width: "Width", lbl_height: "Height", 
+            lbl_grid: "2cm Grid (Snap)", lbl_wall: "1. Wall Size (cm)", lbl_width: "Width", lbl_height: "Height", 
             lbl_board: "2. Add Pegboard", lbl_board_tip: "Tap to place on wall", 
             color_white: "White", color_wood: "Wood", color_black: "Black", btn_add_board: "Throw board on wall",
             lbl_acc: "3. Add Accessories", btn_add_acc: "Throw item on wall", btn_reset: "Delete All / Reset",
-            status_text: "Double Tap = Edit | Drag to 🗑️ = Delete", modal_edit: "Edit Item", lbl_name: "Name:", lbl_color: "Color:",
+            status_text: "Double Tap = Edit | Shift+Click = Multi-Select | 🗑️ = Delete", modal_edit: "Edit Item", lbl_name: "Name:", lbl_color: "Color:",
             btn_save_only: "Save", btn_cancel: "Cancel", modal_settings: "Settings (Prices & Dimensions)",
             grp_container: "Containers & Storage", grp_hooks: "Hooks", grp_special: "Special Holders", grp_custom: "Mounts & Custom",
             opt_custom: "-- Custom Part (3D Print) --", alert_reset: "Delete everything?"
@@ -365,12 +401,21 @@
     let currentZoom = 0.8; 
     let panX = 0, panY = 0;
     let isPanning = false, startPanX = 0, startPanY = 0, lastPinchDist = null, initialZoom = 1;
-    let selectedItem = null, isDraggingItem = false, dragItem = null, dragOffsetX = 0, dragOffsetY = 0;
+    let isDraggingItem = false, dragItem = null, dragOffsetX = 0, dragOffsetY = 0;
+    
+    // Multi-Selection Variables
+    let selectedItems = [];
+    let isMultiMode = false;
+    let dragStartCoords = []; // Speichert Startkoordinaten beim Draggen mehrerer Elemente
     
     // Undo-System
     let historyStack = [];
     let pendingState = null;
-    let dragStartX = null, dragStartY = null;
+
+    function toggleMultiMode() {
+        isMultiMode = !isMultiMode;
+        document.getElementById('multiToggle').classList.toggle('active', isMultiMode);
+    }
 
     function saveState() {
         historyStack.push(wallDiv.innerHTML);
@@ -381,35 +426,44 @@
         if(historyStack.length === 0) return;
         wallDiv.innerHTML = historyStack.pop();
         
-        // Event-Listener nach Wiederherstellung neu binden
         Array.from(wallDiv.children).forEach(el => {
             if(el.classList.contains('item')) {
                 el.addEventListener('dblclick', () => openEdit(el));
             }
         });
         
-        deselectItem();
+        deselectAll();
         stopDragItem();
         updatePrice();
     }
 
     function duplicateSelected() {
-        if (!selectedItem) return;
+        if (selectedItems.length === 0) return;
         saveState();
         
-        const clone = selectedItem.cloneNode(true);
-        let curLeft = parseFloat(clone.style.left) || 0;
-        let curTop = parseFloat(clone.style.top) || 0;
+        let newSelection = [];
+        selectedItems.forEach(item => {
+            const clone = item.cloneNode(true);
+            let curLeft = parseFloat(clone.style.left) || 0;
+            let curTop = parseFloat(clone.style.top) || 0;
+            
+            // Leicht versetzt einfügen
+            clone.style.left = (curLeft + 15) + 'px';
+            clone.style.top = (curTop + 15) + 'px';
+            
+            clone.classList.remove('selected');
+            clone.addEventListener('dblclick', () => openEdit(clone));
+            
+            wallDiv.appendChild(clone);
+            newSelection.push(clone);
+        });
         
-        // Leicht versetzt einfügen
-        clone.style.left = (curLeft + 15) + 'px';
-        clone.style.top = (curTop + 15) + 'px';
-        
-        clone.classList.remove('selected');
-        clone.addEventListener('dblclick', () => openEdit(clone));
-        
-        wallDiv.appendChild(clone);
-        selectItem(clone);
+        deselectAll();
+        newSelection.forEach(clone => {
+            selectedItems.push(clone);
+            clone.classList.add('selected');
+        });
+        updateToolbar();
         updatePrice();
     }
 
@@ -435,14 +489,14 @@
     function handleTouchStart(e) {
         const item = e.target.closest('.item');
         if (item && e.touches.length === 1) {
-            e.stopPropagation(); e.preventDefault(); selectItem(item);
+            e.stopPropagation(); e.preventDefault(); selectItem(item, e);
             const now = new Date().getTime(), last = item.dataset.lastTap || 0;
             if (now - last < 300) { openEdit(item); return; }
             item.dataset.lastTap = now;
             startDragItem(item, e.touches[0].clientX, e.touches[0].clientY); return;
         }
         if (e.touches.length === 2) { isPanning = false; lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialZoom = currentZoom; } 
-        else if (e.touches.length === 1) { if(selectedItem) deselectItem(); isPanning = true; startPanX = e.touches[0].clientX - panX; startPanY = e.touches[0].clientY - panY; }
+        else if (e.touches.length === 1) { deselectAll(); isPanning = true; startPanX = e.touches[0].clientX - panX; startPanY = e.touches[0].clientY - panY; }
     }
     function handleTouchMove(e) {
         if (isDraggingItem && dragItem) { e.preventDefault(); moveDragItem(e.touches[0].clientX, e.touches[0].clientY); checkTrashHover(e.touches[0].clientX, e.touches[0].clientY); }
@@ -455,8 +509,8 @@
     }
     function handleMouseDown(e) {
         const item = e.target.closest('.item');
-        if (item) { e.stopPropagation(); selectItem(item); startDragItem(item, e.clientX, e.clientY); }
-        else { deselectItem(); isPanning = true; startPanX = e.clientX - panX; startPanY = e.clientY - panY; workspace.style.cursor = 'grabbing'; }
+        if (item) { e.stopPropagation(); selectItem(item, e); startDragItem(item, e.clientX, e.clientY); }
+        else { deselectAll(); isPanning = true; startPanX = e.clientX - panX; startPanY = e.clientY - panY; workspace.style.cursor = 'grabbing'; }
     }
     function handleMouseMove(e) {
         if (isDraggingItem) { e.preventDefault(); moveDragItem(e.clientX, e.clientY); checkTrashHover(e.clientX, e.clientY); }
@@ -469,69 +523,211 @@
 
     function startDragItem(item, cx, cy) { 
         pendingState = wallDiv.innerHTML; 
-        dragStartX = item.style.left; dragStartY = item.style.top;
-        isDraggingItem = true; dragItem = item; dragItem.style.opacity = '0.6'; 
-        const rect = dragItem.getBoundingClientRect(); dragOffsetX = cx - rect.left; dragOffsetY = cy - rect.top; 
+        isDraggingItem = true; 
+        dragItem = item; 
+        
+        const rect = dragItem.getBoundingClientRect(); 
+        dragOffsetX = cx - rect.left; 
+        dragOffsetY = cy - rect.top; 
+        
+        // Speichere die Startpositionen aller selektierten Objekte für Delta-Berechnung
+        dragStartCoords = selectedItems.map(el => ({
+            el: el,
+            startX: parseFloat(el.style.left) || 0,
+            startY: parseFloat(el.style.top) || 0
+        }));
+
+        selectedItems.forEach(el => el.style.opacity = '0.6');
     }
     
     function moveDragItem(cx, cy) {
-        if (!dragItem) return;
+        if (!isDraggingItem || !dragItem) return;
         const wallRect = wallDiv.getBoundingClientRect();
-        let x = (cx - wallRect.left - dragOffsetX) / currentZoom; let y = (cy - wallRect.top - dragOffsetY) / currentZoom;
-        x = Math.round(x / 5) * 5; y = Math.round(y / 5) * 5;
-        dragItem.style.left = x + 'px'; dragItem.style.top = y + 'px'; updateCoordsDisplay();
+        
+        let targetX = (cx - wallRect.left - dragOffsetX) / currentZoom; 
+        let targetY = (cy - wallRect.top - dragOffsetY) / currentZoom;
+        
+        // Snap-to-Grid Logik: 10px = 2cm (Grid), 5px = 1cm (Fein)
+        let snap = document.getElementById('gridCheck').checked ? 10 : 5;
+        targetX = Math.round(targetX / snap) * snap;
+        targetY = Math.round(targetY / snap) * snap;
+
+        // Finde das referenzierte Haupt-Drag-Element
+        let primaryStart = dragStartCoords.find(d => d.el === dragItem);
+        if (!primaryStart) return;
+
+        let deltaX = targetX - primaryStart.startX;
+        let deltaY = targetY - primaryStart.startY;
+
+        dragStartCoords.forEach(d => {
+            d.el.style.left = (d.startX + deltaX) + 'px';
+            d.el.style.top = (d.startY + deltaY) + 'px';
+        });
+
+        updateCoordsDisplay();
     }
     
     function stopDragItem() { 
-        if (dragItem) {
-            dragItem.style.opacity = '1'; 
-            if (pendingState && (dragStartX !== dragItem.style.left || dragStartY !== dragItem.style.top)) {
+        if (isDraggingItem) {
+            selectedItems.forEach(el => el.style.opacity = '1');
+            
+            let primaryStart = dragStartCoords.find(d => d.el === dragItem);
+            if (primaryStart && pendingState && (parseFloat(dragItem.style.left) !== primaryStart.startX || parseFloat(dragItem.style.top) !== primaryStart.startY)) {
                 historyStack.push(pendingState);
                 if(historyStack.length > 20) historyStack.shift();
             }
         }
-        isDraggingItem = false; dragItem = null; pendingState = null;
+        isDraggingItem = false; dragItem = null; pendingState = null; dragStartCoords = [];
     }
     
     function checkTrashHover(x, y) { const tRect = trash.getBoundingClientRect(); if (x >= tRect.left && x <= tRect.right && y >= tRect.top && y <= tRect.bottom) trash.classList.add('hover'); else trash.classList.remove('hover'); }
 
-    function selectItem(el) { if (selectedItem) selectedItem.classList.remove('selected'); selectedItem = el; selectedItem.classList.add('selected'); updateCoordsDisplay(); }
-    function deselectItem() { if (selectedItem) selectedItem.classList.remove('selected'); selectedItem = null; coordsSpan.innerText = "x: -, y: -"; }
+    // --- MULTI-SELECT & TOOLBAR ---
+    function selectItem(el, event) { 
+        let isMulti = isMultiMode || (event && event.shiftKey);
+
+        if (isMulti) {
+            if (selectedItems.includes(el)) {
+                el.classList.remove('selected');
+                selectedItems = selectedItems.filter(i => i !== el);
+            } else {
+                selectedItems.push(el);
+                el.classList.add('selected');
+            }
+        } else {
+            if (!selectedItems.includes(el)) {
+                deselectAll();
+                selectedItems = [el];
+                el.classList.add('selected');
+            }
+        }
+        updateToolbar();
+        updateCoordsDisplay(); 
+    }
+
+    function deselectAll() { 
+        selectedItems.forEach(i => i.classList.remove('selected'));
+        selectedItems = []; 
+        coordsSpan.innerText = "x: -, y: -"; 
+        updateToolbar();
+    }
     
     function deleteSelected() { 
-        if (selectedItem) { 
+        if (selectedItems.length > 0) { 
             saveState();
-            selectedItem.remove(); 
-            deselectItem(); 
+            selectedItems.forEach(el => el.remove()); 
+            deselectAll(); 
             updatePrice(); 
             trash.classList.remove('hover'); 
         } 
     }
 
+    function updateToolbar() {
+        const tb = document.getElementById('actionToolbar');
+        if (selectedItems.length > 0) {
+            tb.classList.add('visible');
+            document.getElementById('alignGroup').style.display = selectedItems.length > 1 ? 'flex' : 'none';
+            document.getElementById('distGroup').style.display = selectedItems.length > 2 ? 'flex' : 'none';
+        } else {
+            tb.classList.remove('visible');
+        }
+    }
+
+    // --- ALIGNMENT & DISTRIBUTION ---
+    function alignElements(type) {
+        if(selectedItems.length < 2) return;
+        saveState();
+        
+        let rects = selectedItems.map(el => ({
+            el: el,
+            l: parseFloat(el.style.left),
+            t: parseFloat(el.style.top),
+            w: parseFloat(el.style.width),
+            h: parseFloat(el.style.height)
+        }));
+        
+        let minL = Math.min(...rects.map(r => r.l));
+        let maxR = Math.max(...rects.map(r => r.l + r.w));
+        let minT = Math.min(...rects.map(r => r.t));
+        let maxB = Math.max(...rects.map(r => r.t + r.h));
+        
+        rects.forEach(r => {
+            if (type === 'left') r.el.style.left = minL + 'px';
+            if (type === 'right') r.el.style.left = (maxR - r.w) + 'px';
+            if (type === 'centerX') r.el.style.left = (minL + (maxR - minL)/2 - r.w/2) + 'px';
+            if (type === 'top') r.el.style.top = minT + 'px';
+            if (type === 'bottom') r.el.style.top = (maxB - r.h) + 'px';
+            if (type === 'centerY') r.el.style.top = (minT + (maxB - minT)/2 - r.h/2) + 'px';
+        });
+    }
+
+    function distributeElements(axis) {
+        if(selectedItems.length < 3) return;
+        saveState();
+        
+        let rects = selectedItems.map(el => ({ el: el, l: parseFloat(el.style.left), t: parseFloat(el.style.top) }));
+        
+        if (axis === 'x') {
+            rects.sort((a,b) => a.l - b.l);
+            let step = (rects[rects.length-1].l - rects[0].l) / (rects.length - 1);
+            rects.forEach((r, i) => r.el.style.left = (rects[0].l + i * step) + 'px');
+        } else {
+            rects.sort((a,b) => a.t - b.t);
+            let step = (rects[rects.length-1].t - rects[0].t) / (rects.length - 1);
+            rects.forEach((r, i) => r.el.style.top = (rects[0].t + i * step) + 'px');
+        }
+    }
+
+    // --- LAYERS (Z-INDEX) ---
+    function setLayer(action) {
+        if(selectedItems.length === 0) return;
+        saveState();
+        
+        let allItems = Array.from(wallDiv.children).filter(c => c.classList.contains('item'));
+        let getZ = el => parseInt(el.style.zIndex) || (el.classList.contains('board') ? 10 : 50);
+        
+        if (action === 'front') {
+            let maxZ = Math.max(0, ...allItems.map(getZ));
+            selectedItems.forEach(el => el.style.zIndex = maxZ + 1);
+        } else if (action === 'back') {
+            let minZ = Math.min(100, ...allItems.map(getZ));
+            // Halte Accessories über Boards (Boards sind meist 10)
+            selectedItems.forEach(el => el.style.zIndex = Math.max(11, minZ - 1));
+        } else if (action === 'forward') {
+            selectedItems.forEach(el => el.style.zIndex = getZ(el) + 1);
+        } else if (action === 'backward') {
+            selectedItems.forEach(el => el.style.zIndex = Math.max(11, getZ(el) - 1));
+        }
+    }
+
     document.addEventListener('keydown', (e) => {
-        // Tastenkürzel für Undo und Duplizieren
         if (e.ctrlKey || e.metaKey) {
             if (e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
             if (e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
         }
 
         if (e.target.tagName === 'INPUT') return;
-        if (!selectedItem) return;
+        if (selectedItems.length === 0) return;
         
         const step = e.shiftKey ? 20 : 5; 
-        let l = parseInt(selectedItem.style.left); let t = parseInt(selectedItem.style.top); let moved = false;
+        let moved = false;
         
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
             if (!e.repeat) saveState();
+            
+            selectedItems.forEach(el => {
+                let l = parseFloat(el.style.left); let t = parseFloat(el.style.top);
+                switch(e.key) {
+                    case 'ArrowLeft': el.style.left = (l - step) + 'px'; moved = true; break;
+                    case 'ArrowRight': el.style.left = (l + step) + 'px'; moved = true; break;
+                    case 'ArrowUp': el.style.top = (t - step) + 'px'; moved = true; break;
+                    case 'ArrowDown': el.style.top = (t + step) + 'px'; moved = true; break;
+                }
+            });
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+            deleteSelected(); return;
         }
 
-        switch(e.key) {
-            case 'Delete': case 'Backspace': deleteSelected(); return;
-            case 'ArrowLeft': selectedItem.style.left = (l - step) + 'px'; moved = true; break;
-            case 'ArrowRight': selectedItem.style.left = (l + step) + 'px'; moved = true; break;
-            case 'ArrowUp': selectedItem.style.top = (t - step) + 'px'; moved = true; break;
-            case 'ArrowDown': selectedItem.style.top = (t + step) + 'px'; moved = true; break;
-        }
         if(moved) { e.preventDefault(); updateCoordsDisplay(); }
     });
 
@@ -541,11 +737,13 @@
         el.style.width = (data.w * scale) + 'px'; el.style.height = (data.h * scale) + 'px';
         if (data.type === 'board') {
             el.classList.add('board-' + (data.variant || 'white')); el.dataset.variant = data.variant;
+            el.style.zIndex = 10;
             generateHoles(el, data.w, data.h);
         } else {
             const color = data.color || "#0058a3"; el.style.backgroundColor = color;
             el.style.borderColor = adjustColor(color, -40); el.style.color = getContrastColor(color);
             el.style.fontSize = Math.max(10, Math.min(16, Math.min(data.w, data.h)*scale/4))+'px';
+            el.style.zIndex = 50;
             el.innerHTML = `<span>${data.name}</span>`;
         }
         el.dataset.name = data.name; el.dataset.price = data.price; el.dataset.type = data.datasetType;
@@ -553,7 +751,9 @@
         const wallW = parseFloat(wallDiv.style.width), wallH = parseFloat(wallDiv.style.height);
         el.style.left = (wallW/2 - (data.w*scale)/2) + 'px'; el.style.top = (wallH/2 - (data.h*scale)/2) + 'px';
         el.addEventListener('dblclick', () => openEdit(el));
-        wallDiv.appendChild(el); selectItem(el); updatePrice();
+        wallDiv.appendChild(el); 
+        selectItem(el, {shiftKey: false}); // Markiert das neu erstellte Element einzeln
+        updatePrice();
     }
 
     function spawnBoard() {
@@ -580,8 +780,18 @@
     function toggleCustomInput() { document.getElementById('customInputs').style.display = (document.getElementById('accType').value === 'custom') ? 'block' : 'none'; }
     function resizeWall() { wallDiv.style.width = (document.getElementById('wallW').value * scale) + 'px'; wallDiv.style.height = (document.getElementById('wallH').value * scale) + 'px'; }
     function toggleGrid() { wallDiv.classList.toggle('grid-on', document.getElementById('gridCheck').checked); }
-    function clearWall() { if(confirm(i18n[userLang].alert_reset)) { saveState(); wallDiv.innerHTML = ''; updatePrice(); deselectItem(); } }
-    function updateCoordsDisplay() { if(selectedItem) coordsSpan.innerText = `Pos: ${Math.round(parseInt(selectedItem.style.left)/scale)}/${Math.round(parseInt(selectedItem.style.top)/scale)} cm`; }
+    function clearWall() { if(confirm(i18n[userLang].alert_reset)) { saveState(); wallDiv.innerHTML = ''; updatePrice(); deselectAll(); } }
+    
+    function updateCoordsDisplay() { 
+        if(selectedItems.length === 1) {
+            coordsSpan.innerText = `Pos: ${Math.round(parseInt(selectedItems[0].style.left)/scale)}/${Math.round(parseInt(selectedItems[0].style.top)/scale)} cm`; 
+        } else if (selectedItems.length > 1) {
+            coordsSpan.innerText = `${selectedItems.length} Objekte markiert`;
+        } else {
+            coordsSpan.innerText = "x: -, y: -";
+        }
+    }
+
     function getContrastColor(hex){if(!hex||!hex.startsWith('#'))return'white';const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return((r*299)+(g*587)+(b*114))/1000>=128?'black':'white';}
     function adjustColor(c,a){if(!c||!c.startsWith('#'))return'#000';return'#'+c.replace(/^#/, '').replace(/../g,c=>('0'+Math.min(255,Math.max(0,parseInt(c,16)+a)).toString(16)).substr(-2));}
     
@@ -607,7 +817,6 @@
         document.getElementById('editName').value = editTarget.dataset.name; 
         document.getElementById('editColor').value = editTarget.dataset.color || "#0058a3"; 
         
-        // Lade aktuelle Maße in die Inputs
         document.getElementById('editW').value = parseFloat(editTarget.style.width) / scale;
         document.getElementById('editH').value = parseFloat(editTarget.style.height) / scale;
 
@@ -616,11 +825,10 @@
     
     function saveEdit() { 
         if(editTarget) {
-            saveState(); // Vor Änderung speichern für Undo
+            saveState(); 
             
             editTarget.dataset.name = document.getElementById('editName').value;
             
-            // Neue Maße anwenden
             const newW = parseFloat(document.getElementById('editW').value) || 10;
             const newH = parseFloat(document.getElementById('editH').value) || 10;
             
@@ -628,7 +836,6 @@
             editTarget.style.height = (newH * scale) + 'px';
 
             if(editTarget.classList.contains('board')) {
-                // Bei Boards Löcher neu generieren
                 editTarget.querySelectorAll('.sim-hole, .mount-point').forEach(e => e.remove());
                 generateHoles(editTarget, newW, newH);
             } else if(editTarget.classList.contains('accessory')) {
@@ -636,7 +843,6 @@
                 editTarget.style.backgroundColor = c; editTarget.dataset.color = c; editTarget.style.borderColor = adjustColor(c,-40);
                 editTarget.style.color = getContrastColor(c); 
                 editTarget.querySelector('span').innerText = editTarget.dataset.name;
-                // Schriftgröße an neue Box anpassen
                 editTarget.style.fontSize = Math.max(10, Math.min(16, Math.min(newW, newH)*scale/4))+'px';
             }
         }
@@ -680,9 +886,14 @@
     // --- IMPORT / EXPORT ---
     function exportJSON() {
         const config = { wallW: document.getElementById('wallW').value, wallH: document.getElementById('wallH').value, items: [] };
-        Array.from(wallDiv.children).forEach(el => config.items.push({ className: el.className, l: el.style.left, t: el.style.top, w: el.style.width, h: el.style.height, ds: Object.assign({}, el.dataset), bg: el.style.backgroundColor }));
+        Array.from(wallDiv.children).forEach(el => {
+            if(el.classList.contains('item')) {
+                config.items.push({ className: el.className, l: el.style.left, t: el.style.top, w: el.style.width, h: el.style.height, z: el.style.zIndex, ds: Object.assign({}, el.dataset), bg: el.style.backgroundColor });
+            }
+        });
         const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config)); a.download = "skadis.json"; a.click();
     }
+    
     function importJSON(input) {
         if(!input.files[0]) return;
         const r = new FileReader();
@@ -694,8 +905,11 @@
                 wallDiv.innerHTML = '';
                 c.items.forEach(i => {
                     spawnItemOnWall({ type: i.className.includes('board')?'board':'accessory', price: parseFloat(i.ds.price), w: parseInt(i.w)/scale, h: parseInt(i.h)/scale, name: i.ds.name, variant: i.ds.variant, color: i.bg, isCustom: (i.ds.type==='custom'), datasetType: i.ds.type });
-                    wallDiv.lastChild.style.left = i.l; wallDiv.lastChild.style.top = i.t;
+                    let el = wallDiv.lastChild;
+                    el.style.left = i.l; el.style.top = i.t;
+                    if (i.z) el.style.zIndex = i.z; // Ebenen wiederherstellen
                 });
+                deselectAll();
                 updatePrice();
             } catch (err) { alert("Error"); }
         };
