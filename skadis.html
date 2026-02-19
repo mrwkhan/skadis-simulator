@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SKÅDIS Planer v9</title>
+    <title>SKÅDIS Planer v10</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -35,6 +35,9 @@
         }
 
         h2 { color: #0058a3; margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #ffdb00; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        
+        .header-buttons { display: flex; gap: 10px; }
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; color: #333; }
         
         .control-group { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
         label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #333; }
@@ -80,15 +83,7 @@
         .sim-hole { position: absolute; width: 2.5px; height: 7.5px; border-radius: 1.25px; background-color: rgba(0,0,0,0.18); transform: translate(-50%, -50%); pointer-events: none; }
         .board-black .sim-hole { background-color: rgba(255,255,255,0.25); }
         
-        /* Wall Mounts */
-        .mount-point { 
-            position: absolute; width: 14px; height: 14px; 
-            background: rgba(255, 0, 0, 0.1); 
-            border: 1.5px solid red; border-radius: 50%; 
-            transform: translate(-50%, -50%); 
-            display: flex; align-items: center; justify-content: center; 
-            z-index: 15; pointer-events: none; 
-        }
+        .mount-point { position: absolute; width: 14px; height: 14px; background: rgba(255, 0, 0, 0.1); border: 1.5px solid red; border-radius: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; z-index: 15; pointer-events: none; }
         .mount-point::after { content: "×"; color: red; font-weight: bold; font-size: 12px; line-height: 0; }
 
         .item.accessory { z-index: 50; border: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-radius: 4px; overflow: hidden; padding: 2px; line-height: 1.1; font-weight: bold; }
@@ -97,28 +92,18 @@
         .overlay-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
         .ctrl-btn { width: 44px; height: 44px; background: white; border: 1px solid #ccc; border-radius: 8px; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; color: #333; }
         
-        .status-bar { 
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: rgba(255,255,255,0.95); padding: 10px 15px; 
-            border-top: 1px solid #ccc; font-size: 0.85rem; 
-            display: flex; justify-content: space-between; align-items: center;
-            box-sizing: border-box; z-index: 100; pointer-events: none;
-        }
+        .status-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); padding: 10px 15px; border-top: 1px solid #ccc; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; pointer-events: none; }
 
-        /* --- TRASH CAN (Drag Target) --- */
-        #trash {
-            position: fixed; bottom: 60px; right: 20px;
-            width: 60px; height: 60px; border-radius: 50%;
-            background: #cc0000; color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 30px; z-index: 150;
-            transition: transform 0.2s, background 0.2s;
-        }
+        #trash { position: fixed; bottom: 60px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #cc0000; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 150; transition: transform 0.2s, background 0.2s; }
         #trash.hover { transform: scale(1.2); background: #ff3333; }
 
-        #editModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        /* --- MODALS --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+        
+        .settings-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .settings-row input { padding: 5px; font-size: 0.8rem; margin: 0; }
+        .settings-header { font-weight: bold; font-size: 0.8rem; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -127,80 +112,59 @@
 
 <div class="sidebar" id="sidebar">
     <h2>
-        SKÅDIS Planer v9
-        <button onclick="toggleSidebar()" class="close-sidebar-btn" style="background:none; border:none; font-size:1.5rem; color:#333; width:auto; padding:0;">×</button>
+        <span data-i18n="title">SKÅDIS Planer</span>
+        <div class="header-buttons">
+            <button onclick="openSettings()" class="icon-btn" title="Settings">⚙️</button>
+            <button onclick="toggleSidebar()" class="icon-btn" class="close-sidebar-btn">×</button>
+        </div>
     </h2>
     
     <div class="control-group">
-        <label>Projekt</label>
+        <label data-i18n="lbl_project">Projekt</label>
         <div class="btn-group">
-            <button class="btn-orange" onclick="exportJSON()">💾 Speichern</button>
-            <button class="btn-orange" onclick="document.getElementById('fileInput').click()">📂 Laden</button>
+            <button class="btn-orange" onclick="exportJSON()">💾 <span data-i18n="btn_save">Speichern</span></button>
+            <button class="btn-orange" onclick="document.getElementById('fileInput').click()">📂 <span data-i18n="btn_load">Laden</span></button>
         </div>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(this)" accept=".json">
-        <button class="btn-green" onclick="exportPrint()">🖨️ PDF / Drucken</button>
+        <button class="btn-green" onclick="exportPrint()">🖨️ <span data-i18n="btn_print">PDF / Drucken</span></button>
         <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
             <input type="checkbox" id="gridCheck" checked onchange="toggleGrid()" style="width:auto; margin:0; height:20px; width:20px;"> 
-            <label for="gridCheck" style="margin:0;">2cm Raster</label>
+            <label for="gridCheck" style="margin:0;" data-i18n="lbl_grid">2cm Raster</label>
         </div>
     </div>
 
     <div class="control-group">
-        <label>1. Wandgröße (cm)</label>
+        <label data-i18n="lbl_wall">1. Wandgröße (cm)</label>
         <div class="flex-row">
-            <div class="flex-col"><small>Breite</small><input type="number" id="wallW" value="100" onchange="resizeWall()"></div>
-            <div class="flex-col"><small>Höhe</small><input type="number" id="wallH" value="150" onchange="resizeWall()"></div>
+            <div class="flex-col"><small data-i18n="lbl_width">Breite</small><input type="number" id="wallW" value="100" onchange="resizeWall()"></div>
+            <div class="flex-col"><small data-i18n="lbl_height">Höhe</small><input type="number" id="wallH" value="150" onchange="resizeWall()"></div>
         </div>
     </div>
 
     <div class="control-group">
-        <label>2. Platte hinzufügen</label>
-        <small style="display:block; margin-bottom:5px; color:#666;">Tippen um auf die Wand zu werfen</small>
+        <label data-i18n="lbl_board">2. Platte hinzufügen</label>
+        <small style="display:block; margin-bottom:5px; color:#666;" data-i18n="lbl_board_tip">Tippen um auf die Wand zu werfen</small>
         <div class="flex-row">
             <select id="boardSel" style="flex-grow:2;">
-                <option value="9.99" data-w="36" data-h="56">36x56 cm (€9,99)</option>
-                <option value="14.99" data-w="56" data-h="56">56x56 cm (€14,99)</option>
-                <option value="17.99" data-w="76" data-h="56">76x56 cm (€17,99)</option>
-            </select>
+                </select>
             <select id="boardColor" style="flex-grow:1;">
-                <option value="white">Weiß</option>
-                <option value="wood">Holz</option>
-                <option value="black">Schwarz</option>
+                <option value="white" data-i18n="color_white">Weiß</option>
+                <option value="wood" data-i18n="color_wood">Holz</option>
+                <option value="black" data-i18n="color_black">Schwarz</option>
             </select>
         </div>
-        <button class="btn-blue" onclick="spawnBoard()">➕ Platte auf Wand werfen</button>
+        <button class="btn-blue" onclick="spawnBoard()">➕ <span data-i18n="btn_add_board">Platte auf Wand werfen</span></button>
     </div>
 
     <div class="control-group">
-        <label>3. Zubehör hinzufügen</label>
+        <label data-i18n="lbl_acc">3. Zubehör hinzufügen</label>
         <select id="accType" onchange="toggleCustomInput()">
-            <optgroup label="Behälter & Aufbewahrung">
-                <option value="std" data-price="3.00" data-w="11" data-h="11">Behälter (€3)</option>
-                <option value="std" data-price="10.00" data-w="11" data-h="24">Behälter m. Deckel 3er (€10)</option>
-                <option value="std" data-price="4.00" data-w="27" data-h="6">Ablage (€4)</option>
-                <option value="std" data-price="5.00" data-w="20" data-h="25">Beutel (€5)</option>
-            </optgroup>
-            <optgroup label="Haken">
-                <option value="std" data-price="3.00" data-w="4" data-h="6">Haken kurz (€3)</option>
-                <option value="std" data-price="3.00" data-w="4" data-h="10">Haken lang (€3)</option>
-                <option value="std" data-price="3.00" data-w="4" data-h="8">Haken J-Form (€3)</option>
-            </optgroup>
-            <optgroup label="Spezialhalter">
-                <option value="std" data-price="3.00" data-w="28" data-h="10">Rollenhalter (€3)</option>
-                <option value="std" data-price="2.00" data-w="19" data-h="4">Werkzeughalter (€2)</option>
-                <option value="std" data-price="3.00" data-w="4" data-h="6">Halter Zange/Schere (€3)</option>
-                <option value="std" data-price="3.00" data-w="4" data-h="4">Klemme 2er (€3)</option>
-            </optgroup>
-            <optgroup label="Montage & Custom">
-                <option value="std" data-price="5.00" data-w="4" data-h="10">Befestigungsbeschlag (€5)</option>
-                <option value="custom">-- Manuelles Teil (3D Druck) --</option>
-            </optgroup>
-        </select>
+            </select>
 
         <div id="customInputs" style="display:none; margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
             <div class="flex-row">
-                <div class="flex-col"><small>Breite</small><input type="number" id="custW" value="10"></div>
-                <div class="flex-col"><small>Höhe</small><input type="number" id="custH" value="10"></div>
+                <div class="flex-col"><small data-i18n="lbl_width">Breite</small><input type="number" id="custW" value="10"></div>
+                <div class="flex-col"><small data-i18n="lbl_height">Höhe</small><input type="number" id="custH" value="10"></div>
             </div>
             <input type="text" id="custName" placeholder="Name" style="margin-top:5px;">
             <div class="flex-row">
@@ -209,11 +173,11 @@
             </div>
         </div>
 
-        <button class="btn-dark" onclick="spawnAccessory()">➕ Teil auf Wand werfen</button>
+        <button class="btn-dark" onclick="spawnAccessory()">➕ <span data-i18n="btn_add_acc">Teil auf Wand werfen</span></button>
     </div>
 
     <div style="margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
-        <button class="btn-dark" onclick="clearWall()" style="background:#555; font-size:0.8rem;">⚠️ Alles löschen / Reset</button>
+        <button class="btn-dark" onclick="clearWall()" style="background:#555; font-size:0.8rem;">⚠️ <span data-i18n="btn_reset">Alles löschen / Reset</span></button>
     </div>
 
     <div class="price-tag" id="totalPrice">€0.00</div>
@@ -221,39 +185,154 @@
 </div>
 
 <div class="workspace" id="workspace">
-    <div id="zoomContainer">
-        <div id="wall" class="grid-on"></div>
-    </div>
-
+    <div id="zoomContainer"><div id="wall" class="grid-on"></div></div>
     <div class="overlay-controls">
         <button class="ctrl-btn" onclick="changeZoom(0.1)">➕</button>
         <button class="ctrl-btn" onclick="changeZoom(-0.1)">➖</button>
         <button class="ctrl-btn" onclick="resetView()">⟲</button>
     </div>
-    
-    <div id="trash" title="Zum Löschen hierhin ziehen">🗑️</div>
-
+    <div id="trash" title="🗑️">🗑️</div>
     <div class="status-bar">
-        <div id="statusText">Doppeltipp = Edit | Ziehen auf 🗑️ = Löschen</div>
+        <div id="statusText" data-i18n="status_text">Doppeltipp = Edit | Ziehen auf 🗑️ = Löschen</div>
         <div><span id="coords">x: -, y: -</span></div>
     </div>
 </div>
 
-<div id="editModal">
+<div id="editModal" class="modal-overlay">
     <div class="modal-content">
-        <h3 style="margin-top:0;">Bearbeiten</h3>
-        <label>Name:</label>
+        <h3 style="margin-top:0;" data-i18n="modal_edit">Bearbeiten</h3>
+        <label data-i18n="lbl_name">Name:</label>
         <input type="text" id="editName">
-        <label>Farbe:</label>
+        <label data-i18n="lbl_color">Farbe:</label>
         <input type="color" id="editColor" style="height:50px;">
         <div class="btn-group">
-            <button class="btn-blue" onclick="saveEdit()">Speichern</button>
-            <button class="btn-dark" onclick="closeEdit()">Abbrechen</button>
+            <button class="btn-blue" onclick="saveEdit()" data-i18n="btn_save_only">Speichern</button>
+            <button class="btn-dark" onclick="closeEdit()" data-i18n="btn_cancel">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <h3 style="margin-top:0;" data-i18n="modal_settings">Einstellungen (Preise & Maße)</h3>
+        
+        <div class="settings-row settings-header">
+            <div>Name</div><div>€ Preis</div><div>B (cm)</div><div>H (cm)</div>
+        </div>
+        <div id="settingsList"></div>
+        
+        <div class="btn-group" style="margin-top: 15px;">
+            <button class="btn-blue" onclick="saveSettings()" data-i18n="btn_save_only">Speichern</button>
+            <button class="btn-dark" onclick="closeSettings()" data-i18n="btn_cancel">Abbrechen</button>
         </div>
     </div>
 </div>
 
 <script>
+    // --- APP DATA & I18N ---
+    const i18n = {
+        de: {
+            title: "SKÅDIS Planer v10", lbl_project: "Projekt", btn_save: "Speichern", btn_load: "Laden", btn_print: "PDF / Drucken",
+            lbl_grid: "2cm Raster", lbl_wall: "1. Wandgröße (cm)", lbl_width: "Breite", lbl_height: "Höhe", 
+            lbl_board: "2. Platte hinzufügen", lbl_board_tip: "Tippen um auf die Wand zu werfen", 
+            color_white: "Weiß", color_wood: "Holz", color_black: "Schwarz", btn_add_board: "Platte auf Wand werfen",
+            lbl_acc: "3. Zubehör hinzufügen", btn_add_acc: "Teil auf Wand werfen", btn_reset: "Alles löschen / Reset",
+            status_text: "Doppeltipp = Edit | Ziehen auf 🗑️ = Löschen", modal_edit: "Bearbeiten", lbl_name: "Name:", lbl_color: "Farbe:",
+            btn_save_only: "Speichern", btn_cancel: "Abbrechen", modal_settings: "Einstellungen (Preise & Maße)",
+            grp_container: "Behälter & Aufbewahrung", grp_hooks: "Haken", grp_special: "Spezialhalter", grp_custom: "Montage & Custom",
+            opt_custom: "-- Manuelles Teil (3D Druck) --", alert_reset: "Alles löschen?"
+        },
+        en: {
+            title: "SKÅDIS Planner v10", lbl_project: "Project", btn_save: "Save", btn_load: "Load", btn_print: "PDF / Print",
+            lbl_grid: "2cm Grid", lbl_wall: "1. Wall Size (cm)", lbl_width: "Width", lbl_height: "Height", 
+            lbl_board: "2. Add Pegboard", lbl_board_tip: "Tap to place on wall", 
+            color_white: "White", color_wood: "Wood", color_black: "Black", btn_add_board: "Throw board on wall",
+            lbl_acc: "3. Add Accessories", btn_add_acc: "Throw item on wall", btn_reset: "Delete All / Reset",
+            status_text: "Double Tap = Edit | Drag to 🗑️ = Delete", modal_edit: "Edit Item", lbl_name: "Name:", lbl_color: "Color:",
+            btn_save_only: "Save", btn_cancel: "Cancel", modal_settings: "Settings (Prices & Dimensions)",
+            grp_container: "Containers & Storage", grp_hooks: "Hooks", grp_special: "Special Holders", grp_custom: "Mounts & Custom",
+            opt_custom: "-- Custom Part (3D Print) --", alert_reset: "Delete everything?"
+        }
+    };
+
+    let userLang = navigator.language.startsWith('de') ? 'de' : 'en';
+
+    // Editable Configuration
+    let appConfig = {
+        boards: [
+            { id: "b1", w: 36, h: 56, price: 9.99, name: "36x56 cm" },
+            { id: "b2", w: 56, h: 56, price: 14.99, name: "56x56 cm" },
+            { id: "b3", w: 76, h: 56, price: 17.99, name: "76x56 cm" }
+        ],
+        accessories: [
+            { id: "a1", grp: "grp_container", de: "Behälter", en: "Container", price: 3.00, w: 11, h: 11 },
+            { id: "a2", grp: "grp_container", de: "Behälter m. Deckel 3er", en: "Container w/ Lids (3pk)", price: 10.00, w: 11, h: 24 },
+            { id: "a3", grp: "grp_container", de: "Ablage", en: "Shelf", price: 4.00, w: 27, h: 6 },
+            { id: "a4", grp: "grp_container", de: "Beutel", en: "Bag", price: 5.00, w: 20, h: 25 },
+            
+            { id: "a5", grp: "grp_hooks", de: "Haken kurz", en: "Short Hook", price: 3.00, w: 4, h: 6 },
+            { id: "a6", grp: "grp_hooks", de: "Haken lang", en: "Long Hook", price: 3.00, w: 4, h: 10 },
+            { id: "a7", grp: "grp_hooks", de: "Haken J-Form", en: "J-Hook", price: 3.00, w: 4, h: 8 },
+            
+            { id: "a8", grp: "grp_special", de: "Rollenhalter", en: "Roll Holder", price: 3.00, w: 28, h: 10 },
+            { id: "a9", grp: "grp_special", de: "Werkzeughalter", en: "Tool Holder", price: 2.00, w: 19, h: 4 },
+            { id: "a10", grp: "grp_special", de: "Halter Zange/Schere", en: "Pliers/Scissors Holder", price: 3.00, w: 4, h: 6 },
+            { id: "a11", grp: "grp_special", de: "Klemme 2er", en: "Clips (2pk)", price: 3.00, w: 4, h: 4 },
+            
+            { id: "a12", grp: "grp_custom", de: "Befestigungsbeschlag", en: "Mounting Hardware", price: 5.00, w: 4, h: 10 }
+        ]
+    };
+
+    function applyLanguage() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[userLang][key]) el.innerText = i18n[userLang][key];
+        });
+        buildDropdowns();
+    }
+
+    function buildDropdowns() {
+        // Build Boards
+        const boardSel = document.getElementById('boardSel');
+        boardSel.innerHTML = "";
+        appConfig.boards.forEach(b => {
+            let opt = document.createElement('option');
+            opt.value = b.price; opt.dataset.w = b.w; opt.dataset.h = b.h; opt.dataset.id = b.id;
+            opt.innerText = `${b.name} (€${b.price.toFixed(2)})`;
+            boardSel.appendChild(opt);
+        });
+
+        // Build Accessories
+        const accSel = document.getElementById('accType');
+        accSel.innerHTML = "";
+        let currentGrp = ""; let optGroup = null;
+        
+        appConfig.accessories.forEach(a => {
+            if (a.grp !== currentGrp) {
+                currentGrp = a.grp;
+                optGroup = document.createElement('optgroup');
+                optGroup.label = i18n[userLang][currentGrp] || currentGrp;
+                accSel.appendChild(optGroup);
+            }
+            let opt = document.createElement('option');
+            opt.value = "std";
+            opt.dataset.id = a.id;
+            opt.dataset.price = a.price; opt.dataset.w = a.w; opt.dataset.h = a.h;
+            opt.innerText = `${a[userLang]} (€${a.price.toFixed(2)})`;
+            optGroup.appendChild(opt);
+        });
+
+        // Custom Option
+        let custGrp = document.createElement('optgroup');
+        custGrp.label = i18n[userLang].grp_custom;
+        let custOpt = document.createElement('option');
+        custOpt.value = "custom";
+        custOpt.innerText = i18n[userLang].opt_custom;
+        custGrp.appendChild(custOpt);
+        accSel.appendChild(custGrp);
+    }
+
+    // --- SYSTEM LOGIC ---
     const scale = 5; 
     const workspace = document.getElementById('workspace');
     const wallDiv = document.getElementById('wall');
@@ -264,29 +343,23 @@
 
     let currentZoom = 0.8; 
     let panX = 0, panY = 0;
-    
-    let isPanning = false;
-    let startPanX = 0, startPanY = 0;
-    let lastPinchDist = null;
-    let initialZoom = 1;
+    let isPanning = false, startPanX = 0, startPanY = 0, lastPinchDist = null, initialZoom = 1;
+    let selectedItem = null, isDraggingItem = false, dragItem = null, dragOffsetX = 0, dragOffsetY = 0;
 
-    let selectedItem = null;
-    let isDraggingItem = false;
-    let dragItem = null;
-    let dragOffsetX = 0, dragOffsetY = 0;
-
+    // Initialization
+    applyLanguage();
     resizeWall();
     centerWall();
 
     function toggleSidebar() { sidebar.classList.toggle('open'); }
 
-    // --- ZOOM & PAN ---
+    // Zoom & Pan
     function updateTransform() { zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`; }
     function changeZoom(delta) { currentZoom = Math.min(Math.max(currentZoom + delta, 0.2), 3.0); updateTransform(); }
     function resetView() { centerWall(); }
     function centerWall() { panX = 0; panY = 0; currentZoom = window.innerWidth < 600 ? 0.5 : 0.8; updateTransform(); }
 
-    // --- INPUT HANDLING ---
+    // Inputs
     workspace.addEventListener('touchstart', handleTouchStart, {passive: false});
     workspace.addEventListener('touchmove', handleTouchMove, {passive: false});
     workspace.addEventListener('touchend', handleTouchEnd);
@@ -295,120 +368,56 @@
     window.addEventListener('mouseup', handleMouseUp);
     workspace.addEventListener('wheel', (e) => { e.preventDefault(); changeZoom(-Math.sign(e.deltaY)*0.1); }, {passive:false});
 
-    // Touch Logic
     function handleTouchStart(e) {
         const item = e.target.closest('.item');
         if (item && e.touches.length === 1) {
-            e.stopPropagation(); e.preventDefault();
-            selectItem(item);
-            
-            // Double Tap Detection
-            const now = new Date().getTime();
-            const last = item.dataset.lastTap || 0;
-            if (now - last < 300) {
-                openEdit(item);
-                return;
-            }
+            e.stopPropagation(); e.preventDefault(); selectItem(item);
+            const now = new Date().getTime(), last = item.dataset.lastTap || 0;
+            if (now - last < 300) { openEdit(item); return; }
             item.dataset.lastTap = now;
-
-            startDragItem(item, e.touches[0].clientX, e.touches[0].clientY);
-            return;
+            startDragItem(item, e.touches[0].clientX, e.touches[0].clientY); return;
         }
-        if (e.touches.length === 2) {
-            isPanning = false; lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialZoom = currentZoom;
-        } else if (e.touches.length === 1) {
-            if(selectedItem) deselectItem();
-            isPanning = true; startPanX = e.touches[0].clientX - panX; startPanY = e.touches[0].clientY - panY;
-        }
+        if (e.touches.length === 2) { isPanning = false; lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialZoom = currentZoom; } 
+        else if (e.touches.length === 1) { if(selectedItem) deselectItem(); isPanning = true; startPanX = e.touches[0].clientX - panX; startPanY = e.touches[0].clientY - panY; }
     }
-
     function handleTouchMove(e) {
-        if (isDraggingItem && dragItem) { 
-            e.preventDefault(); 
-            const cx = e.touches[0].clientX;
-            const cy = e.touches[0].clientY;
-            moveDragItem(cx, cy); 
-            checkTrashHover(cx, cy);
-        }
-        else if (e.touches.length === 2 && lastPinchDist) {
-            e.preventDefault(); const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-            currentZoom = Math.min(Math.max(initialZoom + (dist - lastPinchDist) * 0.005, 0.2), 3.0); updateTransform();
-        } else if (isPanning) { e.preventDefault(); panX = e.touches[0].clientX - startPanX; panY = e.touches[0].clientY - startPanY; updateTransform(); }
+        if (isDraggingItem && dragItem) { e.preventDefault(); moveDragItem(e.touches[0].clientX, e.touches[0].clientY); checkTrashHover(e.touches[0].clientX, e.touches[0].clientY); }
+        else if (e.touches.length === 2 && lastPinchDist) { e.preventDefault(); const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); currentZoom = Math.min(Math.max(initialZoom + (dist - lastPinchDist) * 0.005, 0.2), 3.0); updateTransform(); } 
+        else if (isPanning) { e.preventDefault(); panX = e.touches[0].clientX - startPanX; panY = e.touches[0].clientY - startPanY; updateTransform(); }
     }
-
     function handleTouchEnd(e) { 
-        if(isDraggingItem && dragItem) {
-            // Check drop on trash
-            const tRect = trash.getBoundingClientRect();
-            // Use last known touch position is hard, so we rely on the hover state check
-            if(trash.classList.contains('hover')) {
-                deleteSelected();
-            }
-        }
-        trash.classList.remove('hover');
-        isPanning = false; lastPinchDist = null; stopDragItem(); 
+        if(isDraggingItem && dragItem && trash.classList.contains('hover')) deleteSelected();
+        trash.classList.remove('hover'); isPanning = false; lastPinchDist = null; stopDragItem(); 
     }
-
-    // Mouse Logic
     function handleMouseDown(e) {
         const item = e.target.closest('.item');
         if (item) { e.stopPropagation(); selectItem(item); startDragItem(item, e.clientX, e.clientY); }
         else { deselectItem(); isPanning = true; startPanX = e.clientX - panX; startPanY = e.clientY - panY; workspace.style.cursor = 'grabbing'; }
     }
     function handleMouseMove(e) {
-        if (isDraggingItem) { 
-            e.preventDefault(); 
-            moveDragItem(e.clientX, e.clientY); 
-            checkTrashHover(e.clientX, e.clientY);
-        }
+        if (isDraggingItem) { e.preventDefault(); moveDragItem(e.clientX, e.clientY); checkTrashHover(e.clientX, e.clientY); }
         else if (isPanning) { e.preventDefault(); panX = e.clientX - startPanX; panY = e.clientY - startPanY; updateTransform(); }
     }
     function handleMouseUp(e) { 
         if(isDraggingItem && trash.classList.contains('hover')) deleteSelected();
-        trash.classList.remove('hover');
-        isPanning = false; workspace.style.cursor = 'default'; stopDragItem(); 
+        trash.classList.remove('hover'); isPanning = false; workspace.style.cursor = 'default'; stopDragItem(); 
     }
 
-    // Drag Helper
-    function startDragItem(item, cx, cy) {
-        isDraggingItem = true; dragItem = item; dragItem.style.opacity = '0.6';
-        const rect = dragItem.getBoundingClientRect(); dragOffsetX = cx - rect.left; dragOffsetY = cy - rect.top;
-    }
+    function startDragItem(item, cx, cy) { isDraggingItem = true; dragItem = item; dragItem.style.opacity = '0.6'; const rect = dragItem.getBoundingClientRect(); dragOffsetX = cx - rect.left; dragOffsetY = cy - rect.top; }
     function moveDragItem(cx, cy) {
         if (!dragItem) return;
         const wallRect = wallDiv.getBoundingClientRect();
         let x = (cx - wallRect.left - dragOffsetX) / currentZoom; let y = (cy - wallRect.top - dragOffsetY) / currentZoom;
         x = Math.round(x / 5) * 5; y = Math.round(y / 5) * 5;
-        dragItem.style.left = x + 'px'; dragItem.style.top = y + 'px';
-        updateCoordsDisplay();
+        dragItem.style.left = x + 'px'; dragItem.style.top = y + 'px'; updateCoordsDisplay();
     }
     function stopDragItem() { if (dragItem) dragItem.style.opacity = '1'; isDraggingItem = false; dragItem = null; }
-    
-    function checkTrashHover(x, y) {
-        const tRect = trash.getBoundingClientRect();
-        if (x >= tRect.left && x <= tRect.right && y >= tRect.top && y <= tRect.bottom) {
-            trash.classList.add('hover');
-        } else {
-            trash.classList.remove('hover');
-        }
-    }
+    function checkTrashHover(x, y) { const tRect = trash.getBoundingClientRect(); if (x >= tRect.left && x <= tRect.right && y >= tRect.top && y <= tRect.bottom) trash.classList.add('hover'); else trash.classList.remove('hover'); }
 
-    // --- SELECTION ---
-    function selectItem(el) {
-        if (selectedItem) selectedItem.classList.remove('selected');
-        selectedItem = el; selectedItem.classList.add('selected');
-        updateCoordsDisplay();
-    }
-    function deselectItem() {
-        if (selectedItem) selectedItem.classList.remove('selected');
-        selectedItem = null;
-        coordsSpan.innerText = "x: -, y: -";
-    }
-    function deleteSelected() { 
-        if (selectedItem) { selectedItem.remove(); deselectItem(); updatePrice(); trash.classList.remove('hover'); } 
-    }
+    function selectItem(el) { if (selectedItem) selectedItem.classList.remove('selected'); selectedItem = el; selectedItem.classList.add('selected'); updateCoordsDisplay(); }
+    function deselectItem() { if (selectedItem) selectedItem.classList.remove('selected'); selectedItem = null; coordsSpan.innerText = "x: -, y: -"; }
+    function deleteSelected() { if (selectedItem) { selectedItem.remove(); deselectItem(); updatePrice(); trash.classList.remove('hover'); } }
 
-    // --- KEYBOARD ---
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT') return;
         if (!selectedItem) return;
@@ -424,7 +433,6 @@
         if(moved) { e.preventDefault(); updateCoordsDisplay(); }
     });
 
-    // --- CREATION ---
     function spawnItemOnWall(data) {
         const el = document.createElement('div'); el.className = 'item ' + data.type;
         el.style.width = (data.w * scale) + 'px'; el.style.height = (data.h * scale) + 'px';
@@ -439,12 +447,9 @@
         }
         el.dataset.name = data.name; el.dataset.price = data.price; el.dataset.type = data.datasetType;
         if(data.isCustom) { el.dataset.color = data.color; }
-        const wallW = parseFloat(wallDiv.style.width); const wallH = parseFloat(wallDiv.style.height);
+        const wallW = parseFloat(wallDiv.style.width), wallH = parseFloat(wallDiv.style.height);
         el.style.left = (wallW/2 - (data.w*scale)/2) + 'px'; el.style.top = (wallH/2 - (data.h*scale)/2) + 'px';
-        
-        // Double Click for Desktop
         el.addEventListener('dblclick', () => openEdit(el));
-        
         wallDiv.appendChild(el); selectItem(el); updatePrice();
     }
 
@@ -460,20 +465,19 @@
             data.w = parseFloat(document.getElementById('custW').value)||10; data.h = parseFloat(document.getElementById('custH').value)||10;
             data.price = parseFloat(document.getElementById('custPrice').value)||0; data.color = document.getElementById('custColor').value;
         } else {
-            const sel = document.getElementById('accType'); const opt = sel.options[sel.selectedIndex];
-            data.name = opt.text.split(' (')[0]; data.price = parseFloat(opt.getAttribute('data-price'));
-            data.w = parseFloat(opt.getAttribute('data-w')); data.h = parseFloat(opt.getAttribute('data-h'));
+            const sel = document.getElementById('accType'), opt = sel.options[sel.selectedIndex];
+            data.name = opt.text.split(' (')[0]; data.price = parseFloat(opt.dataset.price);
+            data.w = parseFloat(opt.dataset.w); data.h = parseFloat(opt.dataset.h);
             data.datasetType = 'ikea';
         }
         spawnItemOnWall(data);
     }
 
-    // --- UTILS & GENERATORS ---
     function updatePrice(){ let t=0; document.querySelectorAll('.item').forEach(el=>t+=parseFloat(el.dataset.price||0)); document.getElementById('totalPrice').innerText='€'+t.toFixed(2); }
     function toggleCustomInput() { document.getElementById('customInputs').style.display = (document.getElementById('accType').value === 'custom') ? 'block' : 'none'; }
     function resizeWall() { wallDiv.style.width = (document.getElementById('wallW').value * scale) + 'px'; wallDiv.style.height = (document.getElementById('wallH').value * scale) + 'px'; }
     function toggleGrid() { wallDiv.classList.toggle('grid-on', document.getElementById('gridCheck').checked); }
-    function clearWall() { if(confirm("Alles löschen?")) { wallDiv.innerHTML = ''; updatePrice(); deselectItem(); } }
+    function clearWall() { if(confirm(i18n[userLang].alert_reset)) { wallDiv.innerHTML = ''; updatePrice(); deselectItem(); } }
     function updateCoordsDisplay() { if(selectedItem) coordsSpan.innerText = `Pos: ${Math.round(parseInt(selectedItem.style.left)/scale)}/${Math.round(parseInt(selectedItem.style.top)/scale)} cm`; }
     function getContrastColor(hex){if(!hex||!hex.startsWith('#'))return'white';const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return((r*299)+(g*587)+(b*114))/1000>=128?'black':'white';}
     function adjustColor(c,a){if(!c||!c.startsWith('#'))return'#000';return'#'+c.replace(/^#/, '').replace(/../g,c=>('0'+Math.min(255,Math.max(0,parseInt(c,16)+a)).toString(16)).substr(-2));}
@@ -486,19 +490,17 @@
                 if (r === 0 || r === 26) {
                     if (x === xStart || (x + 4 > w - 2)) {
                         const mp = document.createElement('div'); mp.className = 'mount-point';
-                        mp.style.left = (x * scale) + 'px'; mp.style.top = (2+(r*2))*scale + 'px'; 
-                        el.appendChild(mp);
+                        mp.style.left = (x * scale) + 'px'; mp.style.top = (2+(r*2))*scale + 'px'; el.appendChild(mp);
                     }
                 }
             }
         }
     }
 
-    // --- EDITOR ---
+    // --- ITEM EDITOR ---
     let editTarget = null;
     function openEdit(el) { 
-        if(!el) return;
-        editTarget = el; 
+        if(!el) return; editTarget = el; 
         document.getElementById('editName').value = editTarget.dataset.name; 
         document.getElementById('editColor').value = editTarget.dataset.color || "#0058a3"; 
         document.getElementById('editModal').style.display = 'flex'; 
@@ -509,14 +511,46 @@
             if(editTarget.classList.contains('accessory')) {
                 const c = document.getElementById('editColor').value;
                 editTarget.style.backgroundColor = c; editTarget.dataset.color = c; editTarget.style.borderColor = adjustColor(c,-40);
-                editTarget.style.color = getContrastColor(c);
-                editTarget.querySelector('span').innerText = editTarget.dataset.name;
+                editTarget.style.color = getContrastColor(c); editTarget.querySelector('span').innerText = editTarget.dataset.name;
             }
         }
         closeEdit();
     }
     function closeEdit(){ document.getElementById('editModal').style.display='none'; editTarget=null; }
 
+    // --- GLOBAL SETTINGS (Maße & Preise) ---
+    function openSettings() {
+        const list = document.getElementById('settingsList');
+        list.innerHTML = "";
+        
+        // Render Accessories
+        appConfig.accessories.forEach(a => {
+            let row = document.createElement('div');
+            row.className = "settings-row";
+            row.innerHTML = `
+                <div style="font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${a[userLang]}">${a[userLang]}</div>
+                <input type="number" id="set_p_${a.id}" value="${a.price}" step="0.1">
+                <input type="number" id="set_w_${a.id}" value="${a.w}">
+                <input type="number" id="set_h_${a.id}" value="${a.h}">
+            `;
+            list.appendChild(row);
+        });
+        document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function saveSettings() {
+        appConfig.accessories.forEach(a => {
+            a.price = parseFloat(document.getElementById(`set_p_${a.id}`).value) || 0;
+            a.w = parseFloat(document.getElementById(`set_w_${a.id}`).value) || 1;
+            a.h = parseFloat(document.getElementById(`set_h_${a.id}`).value) || 1;
+        });
+        buildDropdowns(); // Dropdowns aktualisieren
+        closeSettings();
+    }
+
+    function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+    // --- IMPORT / EXPORT ---
     function exportJSON() {
         const config = { wallW: document.getElementById('wallW').value, wallH: document.getElementById('wallH').value, items: [] };
         Array.from(wallDiv.children).forEach(el => config.items.push({ className: el.className, l: el.style.left, t: el.style.top, w: el.style.width, h: el.style.height, ds: Object.assign({}, el.dataset), bg: el.style.backgroundColor }));
