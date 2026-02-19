@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SKÅDIS Planer v10.3</title>
+    <title>SKÅDIS Planer v10.4</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -236,7 +236,7 @@
     </div>
     <div id="trash" title="🗑️">🗑️</div>
     <div class="status-bar">
-        <div id="statusText" data-i18n="status_text">Doppeltipp = Edit | Shift+Klick = Multi-Select</div>
+        <div id="statusText" data-i18n="status_text">Doppeltipp = Edit | Shift+Klick = Multi-Select | ESC = Abwählen</div>
         <div><span id="coords">x: -, y: -</span></div>
     </div>
 </div>
@@ -292,7 +292,7 @@
             lbl_board: "2. Platte hinzufügen", lbl_board_tip: "Tippen um auf die Wand zu werfen", 
             color_white: "Weiß", color_wood: "Holz", color_black: "Schwarz", btn_add_board: "Platte auf Wand werfen",
             lbl_acc: "3. Zubehör hinzufügen", btn_add_acc: "Teil auf Wand werfen", btn_reset: "Alles löschen / Reset",
-            status_text: "Doppeltipp = Edit | Shift+Klick = Multi-Select | 🗑️ = Löschen", modal_edit: "Bearbeiten", lbl_name: "Name:", lbl_color: "Farbe:",
+            status_text: "Doppeltipp = Edit | Shift+Klick = Multi-Select | ESC = Abwählen", modal_edit: "Bearbeiten", lbl_name: "Name:", lbl_color: "Farbe:",
             btn_save_only: "Speichern", btn_cancel: "Abbrechen", modal_settings: "Einstellungen (Preise & Maße)",
             grp_container: "Behälter & Aufbewahrung", grp_hooks: "Haken", grp_special: "Spezialhalter", grp_custom: "Montage & Custom",
             opt_custom: "-- Manuelles Teil (3D Druck) --", alert_reset: "Alles löschen?"
@@ -303,7 +303,7 @@
             lbl_board: "2. Add Pegboard", lbl_board_tip: "Tap to place on wall", 
             color_white: "White", color_wood: "Wood", color_black: "Black", btn_add_board: "Throw board on wall",
             lbl_acc: "3. Add Accessories", btn_add_acc: "Throw item on wall", btn_reset: "Delete All / Reset",
-            status_text: "Double Tap = Edit | Shift+Click = Multi-Select | 🗑️ = Delete", modal_edit: "Edit Item", lbl_name: "Name:", lbl_color: "Color:",
+            status_text: "Double Tap = Edit | Shift+Click = Multi-Select | ESC = Deselect", modal_edit: "Edit Item", lbl_name: "Name:", lbl_color: "Color:",
             btn_save_only: "Save", btn_cancel: "Cancel", modal_settings: "Settings (Prices & Dimensions)",
             grp_container: "Containers & Storage", grp_hooks: "Hooks", grp_special: "Special Holders", grp_custom: "Mounts & Custom",
             opt_custom: "-- Custom Part (3D Print) --", alert_reset: "Delete everything?"
@@ -406,7 +406,7 @@
     // Multi-Selection Variables
     let selectedItems = [];
     let isMultiMode = false;
-    let dragStartCoords = []; // Speichert Startkoordinaten beim Draggen mehrerer Elemente
+    let dragStartCoords = []; 
     
     // Undo-System
     let historyStack = [];
@@ -447,7 +447,6 @@
             let curLeft = parseFloat(clone.style.left) || 0;
             let curTop = parseFloat(clone.style.top) || 0;
             
-            // Leicht versetzt einfügen
             clone.style.left = (curLeft + 15) + 'px';
             clone.style.top = (curTop + 15) + 'px';
             
@@ -530,7 +529,6 @@
         dragOffsetX = cx - rect.left; 
         dragOffsetY = cy - rect.top; 
         
-        // Speichere die Startpositionen aller selektierten Objekte für Delta-Berechnung
         dragStartCoords = selectedItems.map(el => ({
             el: el,
             startX: parseFloat(el.style.left) || 0,
@@ -547,12 +545,10 @@
         let targetX = (cx - wallRect.left - dragOffsetX) / currentZoom; 
         let targetY = (cy - wallRect.top - dragOffsetY) / currentZoom;
         
-        // Snap-to-Grid Logik: 10px = 2cm (Grid), 5px = 1cm (Fein)
         let snap = document.getElementById('gridCheck').checked ? 10 : 5;
         targetX = Math.round(targetX / snap) * snap;
         targetY = Math.round(targetY / snap) * snap;
 
-        // Finde das referenzierte Haupt-Drag-Element
         let primaryStart = dragStartCoords.find(d => d.el === dragItem);
         if (!primaryStart) return;
 
@@ -665,17 +661,42 @@
         if(selectedItems.length < 3) return;
         saveState();
         
-        let rects = selectedItems.map(el => ({ el: el, l: parseFloat(el.style.left), t: parseFloat(el.style.top) }));
+        let rects = selectedItems.map(el => ({ 
+            el: el, 
+            l: parseFloat(el.style.left), 
+            t: parseFloat(el.style.top),
+            w: parseFloat(el.style.width),
+            h: parseFloat(el.style.height)
+        }));
         
         if (axis === 'x') {
-            rects.sort((a,b) => a.l - b.l);
-            let step = (rects[rects.length-1].l - rects[0].l) / (rects.length - 1);
-            rects.forEach((r, i) => r.el.style.left = (rects[0].l + i * step) + 'px');
+            // Mittelpunkt X berechnen
+            rects.forEach(r => r.cx = r.l + r.w / 2);
+            rects.sort((a,b) => a.cx - b.cx);
+            
+            let firstCX = rects[0].cx;
+            let lastCX = rects[rects.length-1].cx;
+            let step = (lastCX - firstCX) / (rects.length - 1);
+            
+            rects.forEach((r, i) => {
+                let newCX = firstCX + i * step;
+                r.el.style.left = (newCX - r.w / 2) + 'px';
+            });
         } else {
-            rects.sort((a,b) => a.t - b.t);
-            let step = (rects[rects.length-1].t - rects[0].t) / (rects.length - 1);
-            rects.forEach((r, i) => r.el.style.top = (rects[0].t + i * step) + 'px');
+            // Mittelpunkt Y berechnen
+            rects.forEach(r => r.cy = r.t + r.h / 2);
+            rects.sort((a,b) => a.cy - b.cy);
+            
+            let firstCY = rects[0].cy;
+            let lastCY = rects[rects.length-1].cy;
+            let step = (lastCY - firstCY) / (rects.length - 1);
+            
+            rects.forEach((r, i) => {
+                let newCY = firstCY + i * step;
+                r.el.style.top = (newCY - r.h / 2) + 'px';
+            });
         }
+        updateCoordsDisplay();
     }
 
     // --- LAYERS (Z-INDEX) ---
@@ -691,7 +712,6 @@
             selectedItems.forEach(el => el.style.zIndex = maxZ + 1);
         } else if (action === 'back') {
             let minZ = Math.min(100, ...allItems.map(getZ));
-            // Halte Accessories über Boards (Boards sind meist 10)
             selectedItems.forEach(el => el.style.zIndex = Math.max(11, minZ - 1));
         } else if (action === 'forward') {
             selectedItems.forEach(el => el.style.zIndex = getZ(el) + 1);
@@ -701,6 +721,11 @@
     }
 
     document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            deselectAll();
+            return;
+        }
+
         if (e.ctrlKey || e.metaKey) {
             if (e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
             if (e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
@@ -752,7 +777,7 @@
         el.style.left = (wallW/2 - (data.w*scale)/2) + 'px'; el.style.top = (wallH/2 - (data.h*scale)/2) + 'px';
         el.addEventListener('dblclick', () => openEdit(el));
         wallDiv.appendChild(el); 
-        selectItem(el, {shiftKey: false}); // Markiert das neu erstellte Element einzeln
+        selectItem(el, {shiftKey: false}); 
         updatePrice();
     }
 
@@ -907,7 +932,7 @@
                     spawnItemOnWall({ type: i.className.includes('board')?'board':'accessory', price: parseFloat(i.ds.price), w: parseInt(i.w)/scale, h: parseInt(i.h)/scale, name: i.ds.name, variant: i.ds.variant, color: i.bg, isCustom: (i.ds.type==='custom'), datasetType: i.ds.type });
                     let el = wallDiv.lastChild;
                     el.style.left = i.l; el.style.top = i.t;
-                    if (i.z) el.style.zIndex = i.z; // Ebenen wiederherstellen
+                    if (i.z) el.style.zIndex = i.z;
                 });
                 deselectAll();
                 updatePrice();
